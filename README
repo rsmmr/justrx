@@ -1,0 +1,12 @@
+The start of a basic regular expression library in C.
+
+The main reason for the library's existence is providing a combination
+of features that's hard to find elsewhere:
+
+    - DFA-based
+    - Capture groups
+    - Streaming API
+    - Parallel matching of multiple expressions
+
+However, the code isn't in great shape and hasn't been exercised much
+yet either. For now, maintainance remains limited to bugfixes.
