@@ -1,3 +1,9 @@
+# @TEST-EXEC: cat %INPUT | grep -v ^# | ${BUILD}/test/testregex >output
+# @TEST-EXEC: btest-diff output
+#
+# This is the POSIX test file from http://www2.research.att.com/~gsf/testregex/basic.dat
+# Link doesn't seem to work anymore, but there are other copies of it out there. Note
+# that we aren't fully compliant, so we're recording a base line of expected differences.
 NOTE	all standard compliant implementations should pass these : 2002-05-31
 
 BE	abracadabra$	abracadabracadabra	(7,18)

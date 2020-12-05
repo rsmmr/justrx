@@ -10,3 +10,6 @@ do-build:
 
 clean:
 	rm -rf build
+
+test: do-build
+	cd tests && btest
