@@ -159,8 +159,6 @@ static int _regexec_partial_min(const jrx_regex_t* preg, const char* buffer, uns
         }
     }
 
-    ms->offset = eo;
-
     if ( ! find_partial_matches && jrx_can_transition(ms) )
         return -1;
 
