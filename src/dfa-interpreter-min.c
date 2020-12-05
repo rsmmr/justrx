@@ -77,13 +77,11 @@ int jrx_match_state_advance_min(jrx_match_state* ms, jrx_char cp, jrx_assertion 
             return aid;
         }
 
+        if ( ms->dfa->options & JRX_OPTION_DEBUG )
+            fputs("\n", stderr);
 
-            if ( ms->dfa->options & JRX_OPTION_DEBUG )
-                fputs("\n", stderr);
-
-            // Partial match.
-            return -1;
-
+        // Partial match.
+        return -1;
     }
 
     if ( ms->dfa->options & JRX_OPTION_DEBUG )
