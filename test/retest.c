@@ -98,7 +98,10 @@ int main(int argc, char** argv)
     uint8_t* d;
 
     while ( argc > opt ) {
-        if ( strcmp(argv[opt], "-d") == 0 )
+        if ( strcmp(argv[opt], "-a") == 0 )
+            debug = REG_ANCHOR;
+
+        else if ( strcmp(argv[opt], "-d") == 0 )
             debug = REG_DEBUG;
 
         else if ( strcmp(argv[opt], "-l") == 0 )
@@ -111,7 +114,7 @@ int main(int argc, char** argv)
     }
 
     if ( (argc - opt) < 1 ) {
-        fprintf(stderr, "usage: echo 'data' | retest [-d] [-l] <patterns>\n");
+        fprintf(stderr, "usage: echo 'data' | retest [-a] [-d] [-l] <patterns>\n");
         return 1;
     }
 
