@@ -233,7 +233,14 @@ static void print_accept_set(set_match_accept* s)
     {
         if ( ! first )
             fputc(',', stderr);
-        fprintf(stderr, "(%d, 0x%p)", acc.aid, acc.tags);
+
+        fprintf(stderr, "(%d, ", acc.aid);
+
+        if ( acc.tags )
+            fprintf(stderr, "%u/%u)", acc.tags[0], acc.tags[1]);
+        else
+            fprintf(stderr, "-)");
+
         first = 0;
     }
 
