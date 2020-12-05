@@ -112,6 +112,8 @@ static void _update_accepts(jrx_match_state* ms, jrx_dfa_state* state, jrx_char 
             // No match, final assertions don't work out.
             continue;
 
+        ms->match_eo = ms->offset;
+
         if ( ms->dfa->options & JRX_OPTION_NO_CAPTURE ) {
             jrx_match_accept nacc = {acc.aid, 0};
             set_match_accept_insert(ms->accepts, nacc);
@@ -181,6 +183,7 @@ jrx_match_state* jrx_match_state_init(const jrx_regex_t* preg, jrx_offset begin,
     jrx_dfa* dfa = preg->dfa;
 
     ms->offset = 1;
+    ms->match_eo = 0;
     ms->begin = begin;
     ms->previous = 0;
     ms->dfa = dfa;

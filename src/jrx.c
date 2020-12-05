@@ -142,6 +142,9 @@ static int _regexec_partial_min(const jrx_regex_t* preg, const char* buffer, uns
         // negative space.
         jrx_accept_id rc = jrx_match_state_advance_min(ms, (uint8_t)*p++, assertions);
 
+        if ( rc > 0 )
+            ms->match_eo = ms->offset;
+
         if ( ! rc ) {
             ms->offset = eo;
             return ms->acc > 0 ? ms->acc : 0;

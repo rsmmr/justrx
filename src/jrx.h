@@ -37,7 +37,8 @@ typedef struct jrx_match_state jrx_match_state;
 typedef struct jrx_regex_t jrx_regex_t;
 
 struct jrx_match_state {
-    jrx_offset offset;      ///< Offset of next input byte.
+    jrx_offset offset;      ///< Offset of next unprocessed input byte.
+    jrx_offset match_eo;    ///< End offset of full, final match.
     jrx_offset begin;       // Offset of first cp; will be added to pmatch.
     struct jrx_dfa* dfa;    // The DFA we're matching with.
     jrx_dfa_state_id state; // Current state.
