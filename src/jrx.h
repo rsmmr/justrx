@@ -139,6 +139,11 @@ extern int jrx_regset_add(jrx_regex_t* preg, const char* pattern, unsigned int l
 extern int jrx_regset_finalize(jrx_regex_t* preg);
 extern int jrx_regexec_partial(const jrx_regex_t* preg, const char* buffer, unsigned int len, jrx_assertion first,
                                jrx_assertion last, jrx_match_state* ms, int find_partial_matches);
+extern int jrx_regexec_partial_std(const jrx_regex_t* preg, const char* buffer, unsigned int len,
+                                jrx_assertion first, jrx_assertion last, jrx_match_state* ms, int find_partial_matches);
+extern int jrx_regexec_partial_min(const jrx_regex_t* preg, const char* buffer, unsigned int len,
+                                jrx_assertion first, jrx_assertion last, jrx_match_state* ms, int find_partial_matches);
+
 extern int jrx_reggroups(const jrx_regex_t* preg, jrx_match_state* ms, size_t nmatch, jrx_regmatch_t pmatch[]);
 extern int jrx_num_groups(jrx_regex_t* preg);
 extern int jrx_is_anchored(jrx_regex_t* preg);

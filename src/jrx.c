@@ -86,10 +86,15 @@ static inline jrx_match_accept _pick_accept(set_match_accept* accepts)
 // 0: matching failed and can't be resumed.
 // >0: accept with this ID (if multiple, it's undefined which).
 // -1: partial but not full match yet.
-static int _regexec_partial_std(const jrx_regex_t* preg, const char* buffer, unsigned int len,
-                                jrx_assertion first, jrx_assertion last, jrx_match_state* ms,
-                                int find_partial_matches)
+int jrx_regexec_partial_std(const jrx_regex_t* preg, const char* buffer, unsigned int len,
+                            jrx_assertion first, jrx_assertion last, jrx_match_state* ms,
+                            int find_partial_matches)
 {
+    if ( (preg->dfa->options & JRX_OPTION_NO_CAPTURE) ) {
+        fprintf(stderr, "regexp error: standard matcher used with expression compiled with no capture support");
+        return 0;
+    }
+
     const char* p;
     for ( p = buffer; len; len-- ) {
         jrx_assertion assertions = JRX_ASSERTION_NONE;
@@ -121,9 +126,9 @@ static int _regexec_partial_std(const jrx_regex_t* preg, const char* buffer, uns
 // 0: matching failed and can't be resumed.
 // >0: accept with this ID (if multiple, it's undefined which).
 // -1: partial but not full match yet.
-static int _regexec_partial_min(const jrx_regex_t* preg, const char* buffer, unsigned int len,
-                                jrx_assertion first, jrx_assertion last, jrx_match_state* ms,
-                                int find_partial_matches)
+int jrx_regexec_partial_min(const jrx_regex_t* preg, const char* buffer, unsigned int len,
+                            jrx_assertion first, jrx_assertion last, jrx_match_state* ms,
+                            int find_partial_matches)
 {
     jrx_offset eo = ms->offset;
 
@@ -233,9 +238,9 @@ int jrx_regexec_partial(const jrx_regex_t* preg, const char* buffer, unsigned in
     int rc = 0;
 
     if ( preg->cflags & REG_STD_MATCHER )
-        rc = _regexec_partial_std(preg, buffer, len, first, last, ms, find_partial_matches);
+        rc = jrx_regexec_partial_std(preg, buffer, len, first, last, ms, find_partial_matches);
     else
-        rc = _regexec_partial_min(preg, buffer, len, first, last, ms, find_partial_matches);
+        rc = jrx_regexec_partial_min(preg, buffer, len, first, last, ms, find_partial_matches);
 
     return rc;
 }
