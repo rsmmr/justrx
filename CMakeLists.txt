@@ -4,6 +4,8 @@ cmake_minimum_required(VERSION 3.13)
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
+option(DISABLE_TESTS "Skips compiling tests for the library" off)
+
 find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
 
@@ -40,4 +42,6 @@ target_compile_options(jrx-objects PRIVATE "-fPIC")
 target_include_directories(jrx-objects BEFORE PUBLIC include)
 target_include_directories(jrx-objects BEFORE PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
-add_subdirectory(src/tests)
+if ( NOT DISABLE_TESTS )
+    add_subdirectory(src/tests)
+endif()
