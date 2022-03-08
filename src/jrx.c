@@ -60,7 +60,7 @@ static inline jrx_match_accept _pick_accept(set_match_accept* accepts)
     jrx_match_accept result = {0, 0};
     jrx_offset min = JRX_OFFSET_MAX;
     jrx_offset min_len = 0;
-    // We take the left-most match.
+
     set_for_each(match_accept, accepts, acc)
     {
         if ( ! acc.tags ) {
@@ -71,7 +71,8 @@ static inline jrx_match_accept _pick_accept(set_match_accept* accepts)
 
         int len = acc.tags[1] - acc.tags[0];
 
-        if ( acc.tags[0] < min || (acc.tags[0] == min && len > min_len) ) {
+        // We take the left-most match. If the new match is at the same offset, prefer the shorter match.
+        if ( acc.tags[0] < min || (acc.tags[0] == min && len < min_len) ) {
             result = acc;
             min = acc.tags[0];
             min_len = len;
