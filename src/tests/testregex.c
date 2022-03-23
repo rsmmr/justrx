@@ -1104,7 +1104,7 @@ static int catchfree(regex_t* preg, int flags, int* tabs, char* spec, char* re, 
 
 int main(int argc, char** argv)
 {
-    int flags;
+    int flags = 0;
     int cflags;
     int eflags;
     int nmatch;
