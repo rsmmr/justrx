@@ -1,4 +1,4 @@
-# @TEST-EXEC: cat %INPUT | grep -v ^# | ${BUILD}/test/testregex >output
+# @TEST-EXEC: cat %INPUT | grep -v ^# | ${BUILD}/src/tests/testregex >output
 # @TEST-EXEC: btest-diff output
 #
 # This is the POSIX test file from http://www2.research.att.com/~gsf/testregex/basic.dat
