@@ -24,7 +24,6 @@ static const jrx_option JRX_OPTION_DEBUG = 1 << 2;            // Print debug inf
 static const jrx_option JRX_OPTION_NO_CAPTURE = 1 << 3;       // Do not capture subgroups.
 static const jrx_option JRX_OPTION_STD_MATCHER = 1 << 4;      // Use the standard matcher.
 static const jrx_option JRX_OPTION_DONT_ANCHOR = 1 << 5;      // Don't anchor RE at the beginning.
-static const jrx_option JRX_OPTION_FIRST_MATCH = 1 << 6; // Take first match, rather than longest.
 // static const jrx_option OPTIONS_INCREMENTAL_DFA = 1 << 4;  // Build DFA incrementally.
 
 // Predefined standard character classes.

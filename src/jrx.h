@@ -92,7 +92,6 @@ typedef struct jrx_regmatch_t {
     (1 << 8) //< Anchor matching at beginning. The effect is that of an implicit '^' at the
              // beginning.
 #define REG_LAZY (1 << 9) //< Build DFA incrementally.
-#define REG_FIRST_MATCH (1 << 10) //< Take first match, rather than longest.
 
 // Non-standard error codes..
 #define REG_OK 0 //< Everything is fine.

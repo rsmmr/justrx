@@ -39,9 +39,6 @@ static jrx_option _options(jrx_regex_t* preg)
     if ( cflags & REG_LAZY )
         options |= JRX_OPTION_LAZY;
 
-    if ( cflags & REG_FIRST_MATCH )
-        options |= JRX_OPTION_FIRST_MATCH;
-
     return options;
 }
 
@@ -114,7 +111,7 @@ int jrx_regexec_partial_std(const jrx_regex_t* preg, const char* buffer, unsigne
         }
     }
 
-    if ( ! find_partial_matches && jrx_can_transition(ms) && ! (preg->cflags & REG_FIRST_MATCH) )
+    if ( ! find_partial_matches && jrx_can_transition(ms) )
         return -1;
 
     jrx_match_accept acc = _pick_accept(ms->accepts);
@@ -159,7 +156,7 @@ int jrx_regexec_partial_min(const jrx_regex_t* preg, const char* buffer, unsigne
             eo = ms->offset;
             ms->acc = rc;
 
-            if ( preg->cflags & REG_FIRST_MATCH || ! jrx_can_transition(ms) )
+            if ( ! jrx_can_transition(ms) )
                 return ms->acc;
         }
     }
