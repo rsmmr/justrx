@@ -62,7 +62,7 @@ ACCEPT_ID       \{#[[:digit:]]+\}
 	"[:upper:]"     BEGIN(CCL); yylval->dynccl = JRX_STD_CCL_UPPER; return TOK_DYNCCL;
 	"[:digit:]"     BEGIN(CCL); yylval->dynccl = JRX_STD_CCL_DIGIT; return TOK_DYNCCL;
 	"[:blank:]"     BEGIN(CCL); yylval->dynccl = JRX_STD_CCL_BLANK; return TOK_DYNCCL;
-	{CCL_EXPR}      RE_Error(yyscanner, "bad character class"); BEGIN(CCL); return TOK_DYNCCL;
+	{CCL_EXPR}      RE_Error(yyscanner, "bad character class"); BEGIN(CCL); yylval->dynccl = JRX_STD_CCL_ERROR; return TOK_DYNCCL;
 }
 
 <COUNT>{

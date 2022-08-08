@@ -28,7 +28,7 @@ static const jrx_option JRX_OPTION_DONT_ANCHOR = 1 << 5;      // Don't anchor RE
 
 // Predefined standard character classes.
 typedef enum {
-    JRX_STD_CCL_NONE,
+    JRX_STD_CCL_ERROR,
     JRX_STD_CCL_EPSILON,
     JRX_STD_CCL_ANY,
     JRX_STD_CCL_LOWER,

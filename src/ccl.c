@@ -322,8 +322,9 @@ jrx_ccl* ccl_from_std_ccl(jrx_ccl_group* group, jrx_std_ccl std)
         ccl = local_ccl_blank(group);
         break;
 
-    case JRX_STD_CCL_NONE:
-        jrx_internal_error("ccl_from_std_ccl: JRX_STD_CCL_NONE given");
+    case JRX_STD_CCL_ERROR:
+        ccl = _ccl_create_empty(); // just a fall-back, error should be called elsewhere
+        break;
 
     default:
         jrx_internal_error("ccl_from_std_ccl: unknown std_ccl type");
