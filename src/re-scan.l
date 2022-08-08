@@ -87,7 +87,7 @@ ACCEPT_ID       \{#[[:digit:]]+\}
 void RE_Error(yyscan_t scanner, const char* msg)
 {
     const char** errmsg = RE_get_extra(scanner);
-    if ( errmsg && ! *errmsg )
+    if ( errmsg )
         *errmsg = msg;
 }
 
