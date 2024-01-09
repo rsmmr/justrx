@@ -273,49 +273,50 @@ jrx_nfa* nfa_alternative(jrx_nfa* nfa1, jrx_nfa* nfa2)
 
 jrx_nfa* nfa_iterate(jrx_nfa* nfa, int min, int max)
 {
-    assert(max >= min || max == -1);
-
     jrx_nfa_context* ctx = nfa->ctx;
     jrx_nfa* templ = _nfa_deep_copy(nfa);
 
     if ( min < 0 )
         min = 0;
 
-    if ( min == 0 && max == 0 ) {
-        nfa_delete(nfa);
+    if ( (min == 0 && max == 0) || (max >= 0 && min > max) ) {
+        nfa_delete(templ);
         return nfa_empty(ctx);
     }
 
-    jrx_nfa* all = 0;
-
-    if ( min > 1 ) {
-        all = nfa;
-        int i;
-        for ( i = 0; i < min - 1; i++ )
-            all = nfa_concat(all, _nfa_deep_copy(templ), 0);
-    }
-    else
-        nfa_delete(nfa);
-
-    if ( max >= 0 ) {
-        jrx_nfa* optional = nfa_alternative(_nfa_deep_copy(templ), nfa_empty(ctx));
-
-        int i;
-        for ( i = max - min; i > 0; i-- )
-            all = all ? nfa_concat(all, _nfa_deep_copy(optional), 0) : optional;
-    }
-
-    else {
-        jrx_nfa* closure = _nfa_deep_copy(templ);
-        _nfa_state_add_trans(closure->final, closure->initial, /* closure->initial_tags */ 0,
+    if ( min == 0 && max < 0 ) {
+        // {0,} -> *
+        _nfa_state_add_trans(templ->final, templ->initial, /* closure->initial_tags */ 0,
                              ccl_epsilon(ctx->ccls));
-        all = all ? nfa_concat(all, closure, 0) : closure;
+        jrx_nfa* optional = nfa_alternative(templ, nfa_empty(ctx));
+        return optional;
     }
 
-    if ( min == 0 ) {
-        jrx_nfa* optional = nfa_alternative(all, nfa_empty(ctx));
-        all = optional;
+    jrx_nfa* all = 0;
+    jrx_nfa* last = 0;
+
+    assert(min >= 0);
+    for ( int i = 0; i < min; ++i ) {
+        last = _nfa_deep_copy(templ);
+        all = all ? nfa_concat(all, last, 0) : last;
     }
+
+    if ( max < 0 ) {
+        assert(all);
+        assert(last);
+        _nfa_state_add_trans(last->final, last->initial, /* closure->initial_tags */ 0,
+                             ccl_epsilon(ctx->ccls));
+        all = last;
+    }
+    else {
+        assert(max >= min);
+        for ( int i = 0; i < (max - min); ++i ) {
+            jrx_nfa* optional = nfa_alternative(_nfa_deep_copy(templ), nfa_empty(ctx));
+            all = all ? nfa_concat(all, optional, 0) : optional;
+        }
+    }
+
+    assert(all);
 
     nfa_delete(templ);
     return all;
