@@ -113,16 +113,20 @@ singleton : singleton '*'
 
           | singleton '{' opt_count ',' opt_count '}'
             {
-                if ( $3 > $5 && $5 >= 0 )
+                if ( $3 > $5 && $5 >= 0 ) {
                     parse_error("bad interation value");
+                    $$ = $1; // will be deleted during error handling
+                }
                 else
                     $$ = nfa_iterate($1, $3, $5);
             }
 
           | singleton '{' TOK_COUNT '}'
             {
-                if ( $3 < 0 )
+                if ( $3 < 0 ) {
                     parse_error("bad interation value");
+                    $$ = $1; // will be deleted during error handling
+                }
                 else
                     $$ = nfa_iterate($1, $3, $3);
             }

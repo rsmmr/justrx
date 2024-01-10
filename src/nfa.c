@@ -274,22 +274,21 @@ jrx_nfa* nfa_alternative(jrx_nfa* nfa1, jrx_nfa* nfa2)
 jrx_nfa* nfa_iterate(jrx_nfa* nfa, int min, int max)
 {
     jrx_nfa_context* ctx = nfa->ctx;
-    jrx_nfa* templ = _nfa_deep_copy(nfa);
 
     if ( min < 0 )
         min = 0;
 
     if ( (min == 0 && max == 0) || (max >= 0 && min > max) ) {
-        nfa_delete(templ);
-        return nfa_empty(ctx);
+        jrx_nfa* result = nfa_empty(ctx);
+        nfa_delete(nfa);
+        return result;
     }
 
     if ( min == 0 && max < 0 ) {
         // {0,} -> *
-        _nfa_state_add_trans(templ->final, templ->initial, /* closure->initial_tags */ 0,
+        _nfa_state_add_trans(nfa->final, nfa->initial, /* closure->initial_tags */ 0,
                              ccl_epsilon(ctx->ccls));
-        jrx_nfa* optional = nfa_alternative(templ, nfa_empty(ctx));
-        return optional;
+        return nfa_alternative(nfa, nfa_empty(ctx));
     }
 
     jrx_nfa* all = 0;
@@ -297,7 +296,7 @@ jrx_nfa* nfa_iterate(jrx_nfa* nfa, int min, int max)
 
     assert(min >= 0);
     for ( int i = 0; i < min; ++i ) {
-        last = _nfa_deep_copy(templ);
+        last = _nfa_deep_copy(nfa);
         all = all ? nfa_concat(all, last, 0) : last;
     }
 
@@ -306,19 +305,21 @@ jrx_nfa* nfa_iterate(jrx_nfa* nfa, int min, int max)
         assert(last);
         _nfa_state_add_trans(last->final, last->initial, /* closure->initial_tags */ 0,
                              ccl_epsilon(ctx->ccls));
-        all = last;
+        if ( all != last ) {
+            nfa_delete(all);
+            all = last;
+        }
     }
     else {
         assert(max >= min);
         for ( int i = 0; i < (max - min); ++i ) {
-            jrx_nfa* optional = nfa_alternative(_nfa_deep_copy(templ), nfa_empty(ctx));
+            jrx_nfa* optional = nfa_alternative(_nfa_deep_copy(nfa), nfa_empty(ctx));
             all = all ? nfa_concat(all, optional, 0) : optional;
         }
     }
 
     assert(all);
-
-    nfa_delete(templ);
+    nfa_delete(nfa);
     return all;
 }
 
@@ -470,8 +471,9 @@ static jrx_nfa* _nfa_compile_pattern(jrx_nfa_context* ctx, const char* pattern, 
     RE_set_extra(&internal_errmsg, scanner);
 
     int i = RE_parse(scanner, ctx, &nfa);
-
     RE_lex_destroy(scanner);
+
+    assert(nfa);
 
     if ( i == 1 && ! internal_errmsg )
         internal_errmsg = "parser error";
@@ -480,16 +482,13 @@ static jrx_nfa* _nfa_compile_pattern(jrx_nfa_context* ctx, const char* pattern, 
         internal_errmsg = "out of memory during parsing";
 
     if ( internal_errmsg ) {
-        nfa_context_delete(ctx);
-        ctx = 0;
+        nfa_delete(nfa);
 
         if ( errmsg )
             *errmsg = internal_errmsg;
 
         return 0;
     }
-
-    assert(nfa);
 
     // We take the next available accept IDs if we don't have one set yet.
     if ( ! nfa->final->accepts )
