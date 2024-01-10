@@ -1,14 +1,13 @@
 // $Id$
 
 #include "dfa-interpreter-min.h"
+
 #include "jlocale.h"
 #include "jrx-intern.h"
 #include "nfa.h"
 #include "util.h"
 
-static int _ccl_match_assertions(jrx_char cp, jrx_char* previous, jrx_assertion have,
-                                 jrx_assertion want)
-{
+static int _ccl_match_assertions(jrx_char cp, jrx_char* previous, jrx_assertion have, jrx_assertion want) {
     if ( want & JRX_ASSERTION_WORD_BOUNDARY )
         have |= local_word_boundary(previous, cp) ? JRX_ASSERTION_WORD_BOUNDARY : 0;
 
@@ -18,8 +17,7 @@ static int _ccl_match_assertions(jrx_char cp, jrx_char* previous, jrx_assertion 
     return (want & have) == want;
 }
 
-static int _ccl_match(jrx_ccl* ccl, jrx_char cp, jrx_char* previous, jrx_assertion assertions)
-{
+static int _ccl_match(jrx_ccl* ccl, jrx_char cp, jrx_char* previous, jrx_assertion assertions) {
     if ( ! ccl->ranges )
         return 0;
 
@@ -27,8 +25,7 @@ static int _ccl_match(jrx_ccl* ccl, jrx_char cp, jrx_char* previous, jrx_asserti
         return 0;
 
     // Look at ranges.
-    set_for_each(char_range, ccl->ranges, r)
-    {
+    set_for_each(char_range, ccl->ranges, r) {
         if ( cp >= r.begin && cp < r.end )
             return 1;
     }
@@ -36,19 +33,16 @@ static int _ccl_match(jrx_ccl* ccl, jrx_char cp, jrx_char* previous, jrx_asserti
     return 0;
 }
 
-int jrx_match_state_advance_min(jrx_match_state* ms, jrx_char cp, jrx_assertion assertions)
-{
+int jrx_match_state_advance_min(jrx_match_state* ms, jrx_char cp, jrx_assertion assertions) {
     jrx_dfa_state* state = dfa_get_state(ms->dfa, ms->state);
 
     if ( ! state )
         return 0;
 
     if ( ms->dfa->options & JRX_OPTION_DEBUG )
-        fprintf(stderr, "> in state #%u with input symbol %u and assertions %u ", ms->state, cp,
-                assertions);
+        fprintf(stderr, "> in state #%u with input symbol %u and assertions %u ", ms->state, cp, assertions);
 
-    vec_for_each(dfa_transition, state->trans, trans)
-    {
+    vec_for_each(dfa_transition, state->trans, trans) {
         jrx_ccl* ccl = vec_ccl_get(ms->dfa->ccls->ccls, trans.ccl);
 
         if ( ! _ccl_match(ccl, cp, ms->offset == 0 ? &ms->previous : 0, assertions) )

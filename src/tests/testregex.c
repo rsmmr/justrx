@@ -40,13 +40,14 @@ static const char id[] = "\n@(#)$Id: testregex (AT&T Research) 2008-05-15 $\0\n"
 #include <sys/types.h>
 #endif
 
-#include "./regex.h"
 #include <ctype.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "./regex.h"
 
 #ifdef __STDC__
 #include <locale.h>
@@ -97,9 +98,9 @@ static const char id[] = "\n@(#)$Id: testregex (AT&T Research) 2008-05-15 $\0\n"
 
 #define TEST_DECOMP 0x40000000
 
-#define TEST_GLOBAL                                                                                \
-    (TEST_ACTUAL | TEST_AND | TEST_BASELINE | TEST_CATCH | TEST_FAIL | TEST_IGNORE_ERROR |         \
-     TEST_IGNORE_OVER | TEST_IGNORE_POSITION | TEST_OR | TEST_PASS | TEST_SUMMARY | TEST_VERBOSE)
+#define TEST_GLOBAL                                                                                                    \
+    (TEST_ACTUAL | TEST_AND | TEST_BASELINE | TEST_CATCH | TEST_FAIL | TEST_IGNORE_ERROR | TEST_IGNORE_OVER |          \
+     TEST_IGNORE_POSITION | TEST_OR | TEST_PASS | TEST_SUMMARY | TEST_VERBOSE)
 
 #ifdef REG_DISCIPLINE
 
@@ -112,24 +113,21 @@ typedef struct Disc_s {
     Sfio_t* sp;
 } Disc_t;
 
-static void* compf(const regex_t* re, const char* xstr, size_t xlen, regdisc_t* disc)
-{
+static void* compf(const regex_t* re, const char* xstr, size_t xlen, regdisc_t* disc) {
     Disc_t* dp = (Disc_t*)disc;
 
     return (void*)++dp->ordinal;
 }
 
-static int execf(const regex_t* re, void* data, const char* xstr, size_t xlen, const char* sstr,
-                 size_t slen, char** snxt, regdisc_t* disc)
-{
+static int execf(const regex_t* re, void* data, const char* xstr, size_t xlen, const char* sstr, size_t slen,
+                 char** snxt, regdisc_t* disc) {
     Disc_t* dp = (Disc_t*)disc;
 
     sfprintf(dp->sp, "{%-.*s}(%d:%d)", xlen, xstr, (int)data, slen);
     return atoi(xstr);
 }
 
-static void* resizef(void* handle, void* data, size_t size)
-{
+static void* resizef(void* handle, void* data, size_t size) {
     if ( ! size )
         return 0;
     return stkalloc((Sfio_t*)handle, size);
@@ -145,15 +143,14 @@ static void* resizef(void* handle, void* data, size_t size)
 #endif
 #endif
 
-#define H(x)                                                                                       \
-    do {                                                                                           \
-        if ( html )                                                                                \
-            fprintf(stderr, x);                                                                    \
+#define H(x)                                                                                                           \
+    do {                                                                                                               \
+        if ( html )                                                                                                    \
+            fprintf(stderr, x);                                                                                        \
     } while ( 0 )
 #define T(x) fprintf(stderr, x)
 
-static void help(int html)
-{
+static void help(int html) {
     H("<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML//EN\">\n");
     H("<HTML>\n");
     H("<HEAD>\n");
@@ -509,13 +506,12 @@ static const struct {
     int code;
     char* name;
 } codes[] = {
-    REG_UNKNOWN,  "UNKNOWN",  REG_NOMATCH, "NOMATCH",   REG_BADPAT, "BADPAT",    REG_ECOLLATE,
-    "ECOLLATE",   REG_ECTYPE, "ECTYPE",    REG_EESCAPE, "EESCAPE",  REG_ESUBREG, "ESUBREG",
-    REG_EBRACK,   "EBRACK",   REG_EPAREN,  "EPAREN",    REG_EBRACE, "EBRACE",    REG_BADBR,
-    "BADBR",      REG_ERANGE, "ERANGE",    REG_ESPACE,  "ESPACE",   REG_BADRPT,  "BADRPT",
-    REG_ENEWLINE, "ENEWLINE", REG_ENULL,   "ENULL",     REG_ECOUNT, "ECOUNT",    REG_BADESC,
-    "BADESC",     REG_EMEM,   "EMEM",      REG_EHUNG,   "EHUNG",    REG_EBUS,    "EBUS",
-    REG_EFAULT,   "EFAULT",   REG_EFLAGS,  "EFLAGS",    REG_EDELIM, "EDELIM",
+    REG_UNKNOWN, "UNKNOWN", REG_NOMATCH, "NOMATCH", REG_BADPAT,   "BADPAT",   REG_ECOLLATE, "ECOLLATE",
+    REG_ECTYPE,  "ECTYPE",  REG_EESCAPE, "EESCAPE", REG_ESUBREG,  "ESUBREG",  REG_EBRACK,   "EBRACK",
+    REG_EPAREN,  "EPAREN",  REG_EBRACE,  "EBRACE",  REG_BADBR,    "BADBR",    REG_ERANGE,   "ERANGE",
+    REG_ESPACE,  "ESPACE",  REG_BADRPT,  "BADRPT",  REG_ENEWLINE, "ENEWLINE", REG_ENULL,    "ENULL",
+    REG_ECOUNT,  "ECOUNT",  REG_BADESC,  "BADESC",  REG_EMEM,     "EMEM",     REG_EHUNG,    "EHUNG",
+    REG_EBUS,    "EBUS",    REG_EFAULT,  "EFAULT",  REG_EFLAGS,   "EFLAGS",   REG_EDELIM,   "EDELIM",
 };
 
 static struct {
@@ -538,8 +534,7 @@ static struct {
 #endif
 } state;
 
-static void quote(char* s, int len, unsigned long test)
-{
+static void quote(char* s, int len, unsigned long test) {
     unsigned char* u = (unsigned char*)s;
     unsigned char* e;
     int c;
@@ -559,53 +554,35 @@ static void quote(char* s, int len, unsigned long test)
             printf("\"");
         while ( u < e )
             switch ( c = *u++ ) {
-            case '\\':
-                printf("\\\\");
-                break;
-            case '"':
-                if ( test & TEST_DELIMIT )
-                    printf("\\\"");
-                else
-                    printf("\"");
-                break;
-            case '\a':
-                printf("\\a");
-                break;
-            case '\b':
-                printf("\\b");
-                break;
-            case 033:
-                printf("\\e");
-                break;
-            case '\f':
-                printf("\\f");
-                break;
-            case '\n':
-                printf("\\n");
-                break;
-            case '\r':
-                printf("\\r");
-                break;
-            case '\t':
-                printf("\\t");
-                break;
-            case '\v':
-                printf("\\v");
-                break;
-            default:
+                case '\\': printf("\\\\"); break;
+                case '"':
+                    if ( test & TEST_DELIMIT )
+                        printf("\\\"");
+                    else
+                        printf("\"");
+                    break;
+                case '\a': printf("\\a"); break;
+                case '\b': printf("\\b"); break;
+                case 033: printf("\\e"); break;
+                case '\f': printf("\\f"); break;
+                case '\n': printf("\\n"); break;
+                case '\r': printf("\\r"); break;
+                case '\t': printf("\\t"); break;
+                case '\v': printf("\\v"); break;
+                default:
 #ifdef MB_CUR_MAX
-                s = (char*)u - 1;
-                if ( (w = mblen(s, (char*)e - s)) > 1 ) {
-                    u += w - 1;
-                    fwrite(s, 1, w, stdout);
-                }
-                else
+                    s = (char*)u - 1;
+                    if ( (w = mblen(s, (char*)e - s)) > 1 ) {
+                        u += w - 1;
+                        fwrite(s, 1, w, stdout);
+                    }
+                    else
 #endif
-                    if ( ! iscntrl(c) && isprint(c) )
-                    putchar(c);
-                else
-                    printf("\\x%02x", c);
-                break;
+                        if ( ! iscntrl(c) && isprint(c) )
+                        putchar(c);
+                    else
+                        printf("\\x%02x", c);
+                    break;
             }
         if ( test & TEST_DELIMIT )
             printf("\"");
@@ -614,9 +591,7 @@ static void quote(char* s, int len, unsigned long test)
         printf("%s", s);
 }
 
-static void report(char* comment, char* fun, char* re, char* s, int len, char* msg, int flags,
-                   unsigned long test)
-{
+static void report(char* comment, char* fun, char* re, char* s, int len, char* msg, int flags, unsigned long test) {
     if ( state.file )
         printf("%s:", state.file);
     printf("%d:", state.lineno);
@@ -649,37 +624,26 @@ static void report(char* comment, char* fun, char* re, char* s, int len, char* m
     }
 }
 
-static void error(regex_t* preg, int code)
-{
+static void error(regex_t* preg, int code) {
     char* msg;
     char buf[256];
 
     switch ( code ) {
-    case REG_EBUS:
-        msg = "bus error";
-        break;
-    case REG_EFAULT:
-        msg = "memory fault";
-        break;
-    case REG_EHUNG:
-        msg = "did not terminate";
-        break;
-    default:
-        regerror(code, preg, msg = buf, sizeof buf);
-        break;
+        case REG_EBUS: msg = "bus error"; break;
+        case REG_EFAULT: msg = "memory fault"; break;
+        case REG_EHUNG: msg = "did not terminate"; break;
+        default: regerror(code, preg, msg = buf, sizeof buf); break;
     }
     printf("%s\n", msg);
 }
 
-static void bad(char* comment, char* re, char* s, int len, unsigned long test)
-{
+static void bad(char* comment, char* re, char* s, int len, unsigned long test) {
     printf("bad test case ");
     report(comment, NiL, re, s, len, NiL, 0, test);
     exit(1);
 }
 
-static int escape(char* s)
-{
+static int escape(char* s) {
     char* b;
     char* t;
     char* q;
@@ -689,157 +653,115 @@ static int escape(char* s)
     for ( b = t = s; (*t = *s); s++, t++ )
         if ( *s == '\\' )
             switch ( *++s ) {
-            case '\\':
-                break;
-            case 'a':
-                *t = '\a';
-                break;
-            case 'b':
-                *t = '\b';
-                break;
-            case 'c':
-                if (( *t = *++s ))
-                    *t &= 037;
-                else
-                    s--;
-                break;
-            case 'e':
-            case 'E':
-                *t = 033;
-                break;
-            case 'f':
-                *t = '\f';
-                break;
-            case 'n':
-                *t = '\n';
-                break;
-            case 'r':
-                *t = '\r';
-                break;
-            case 's':
-                *t = ' ';
-                break;
-            case 't':
-                *t = '\t';
-                break;
-            case 'v':
-                *t = '\v';
-                break;
-            case 'u':
-            case 'x':
-                c = 0;
-                q = c == 'u' ? (s + 5) : (char*)0;
-                e = s + 1;
-                while ( ! e || ! q || s < q ) {
-                    switch ( *++s ) {
-                    case 'a':
-                    case 'b':
-                    case 'c':
-                    case 'd':
-                    case 'e':
-                    case 'f':
-                        c = (c << 4) + *s - 'a' + 10;
-                        continue;
-                    case 'A':
-                    case 'B':
-                    case 'C':
-                    case 'D':
-                    case 'E':
-                    case 'F':
-                        c = (c << 4) + *s - 'A' + 10;
-                        continue;
-                    case '0':
-                    case '1':
-                    case '2':
-                    case '3':
-                    case '4':
-                    case '5':
-                    case '6':
-                    case '7':
-                    case '8':
-                    case '9':
-                        c = (c << 4) + *s - '0';
-                        continue;
-                    case '{':
-                    case '[':
-                        if ( s != e ) {
-                            s--;
-                            break;
-                        }
-                        e = 0;
-                        continue;
-                    case '}':
-                    case ']':
-                        if ( e )
-                            s--;
-                        break;
-                    default:
+                case '\\': break;
+                case 'a': *t = '\a'; break;
+                case 'b': *t = '\b'; break;
+                case 'c':
+                    if ( (*t = *++s) )
+                        *t &= 037;
+                    else
                         s--;
-                        break;
-                    }
                     break;
-                }
-                *t = c;
-                break;
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-                c = *s - '0';
-                q = s + 2;
-                while ( s < q ) {
-                    switch ( *++s ) {
-                    case '0':
-                    case '1':
-                    case '2':
-                    case '3':
-                    case '4':
-                    case '5':
-                    case '6':
-                    case '7':
-                        c = (c << 3) + *s - '0';
-                        break;
-                    default:
-                        q = --s;
+                case 'e':
+                case 'E': *t = 033; break;
+                case 'f': *t = '\f'; break;
+                case 'n': *t = '\n'; break;
+                case 'r': *t = '\r'; break;
+                case 's': *t = ' '; break;
+                case 't': *t = '\t'; break;
+                case 'v': *t = '\v'; break;
+                case 'u':
+                case 'x':
+                    c = 0;
+                    q = c == 'u' ? (s + 5) : (char*)0;
+                    e = s + 1;
+                    while ( ! e || ! q || s < q ) {
+                        switch ( *++s ) {
+                            case 'a':
+                            case 'b':
+                            case 'c':
+                            case 'd':
+                            case 'e':
+                            case 'f': c = (c << 4) + *s - 'a' + 10; continue;
+                            case 'A':
+                            case 'B':
+                            case 'C':
+                            case 'D':
+                            case 'E':
+                            case 'F': c = (c << 4) + *s - 'A' + 10; continue;
+                            case '0':
+                            case '1':
+                            case '2':
+                            case '3':
+                            case '4':
+                            case '5':
+                            case '6':
+                            case '7':
+                            case '8':
+                            case '9': c = (c << 4) + *s - '0'; continue;
+                            case '{':
+                            case '[':
+                                if ( s != e ) {
+                                    s--;
+                                    break;
+                                }
+                                e = 0;
+                                continue;
+                            case '}':
+                            case ']':
+                                if ( e )
+                                    s--;
+                                break;
+                            default: s--; break;
+                        }
                         break;
                     }
-                }
-                *t = c;
-                break;
-            default:
-                *(s + 1) = 0;
-                bad("invalid C \\ escape\n", s - 1, NiL, 0, 0);
+                    *t = c;
+                    break;
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                    c = *s - '0';
+                    q = s + 2;
+                    while ( s < q ) {
+                        switch ( *++s ) {
+                            case '0':
+                            case '1':
+                            case '2':
+                            case '3':
+                            case '4':
+                            case '5':
+                            case '6':
+                            case '7': c = (c << 3) + *s - '0'; break;
+                            default: q = --s; break;
+                        }
+                    }
+                    *t = c;
+                    break;
+                default: *(s + 1) = 0; bad("invalid C \\ escape\n", s - 1, NiL, 0, 0);
             }
     return t - b;
 }
 
-static void matchoffprint(int off)
-{
+static void matchoffprint(int off) {
     switch ( off ) {
-    case -2:
-        printf("X");
-        break;
-    case -1:
-        printf("?");
-        break;
-    default:
-        printf("%d", off);
-        break;
+        case -2: printf("X"); break;
+        case -1: printf("?"); break;
+        default: printf("%d", off); break;
     }
 }
 
-static void matchprint(regmatch_t* match, int nmatch, int nsub, char* ans, unsigned long test)
-{
+static void matchprint(regmatch_t* match, int nmatch, int nsub, char* ans, unsigned long test) {
     int i;
 
     for ( ; nmatch > nsub + 1; nmatch-- )
         if ( (match[nmatch - 1].rm_so != -1 || match[nmatch - 1].rm_eo != -1) &&
-             (! (test & TEST_IGNORE_POSITION) ||
-              (match[nmatch - 1].rm_so >= 0 && match[nmatch - 1].rm_eo >= 0)) )
+             (! (test & TEST_IGNORE_POSITION) || (match[nmatch - 1].rm_so >= 0 && match[nmatch - 1].rm_eo >= 0)) )
             break;
     for ( i = 0; i < nmatch; i++ ) {
         printf("(");
@@ -855,9 +777,8 @@ static void matchprint(regmatch_t* match, int nmatch, int nsub, char* ans, unsig
     }
 }
 
-static int matchcheck(regmatch_t* match, int nmatch, int nsub, char* ans, char* re, char* s,
-                      int len, int flags, unsigned long test)
-{
+static int matchcheck(regmatch_t* match, int nmatch, int nsub, char* ans, char* re, char* s, int len, int flags,
+                      unsigned long test) {
     char* p;
     int i;
     int m;
@@ -873,8 +794,8 @@ static int matchcheck(regmatch_t* match, int nmatch, int nsub, char* ans, char* 
             if ( ! (x = sfstruse(state.disc.sp)) )
                 bad("out of space [discipline string]\n", NiL, NiL, 0, 0);
             if ( strcmp(p, x) ) {
-                if ( test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_QUERY |
-                             TEST_SUMMARY | TEST_VERIFY) )
+                if ( test &
+                     (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_QUERY | TEST_SUMMARY | TEST_VERIFY) )
                     return 0;
                 report("callout failed", NiL, re, s, len, NiL, flags, test);
                 quote(p, -1, test);
@@ -904,8 +825,8 @@ static int matchcheck(regmatch_t* match, int nmatch, int nsub, char* ans, char* 
         if ( *p++ != ')' )
             bad("improper answer\n", re, s, -1, test);
         if ( m != match[i].rm_so || n != match[i].rm_eo ) {
-            if ( ! (test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_QUERY |
-                            TEST_SUMMARY | TEST_VERIFY)) ) {
+            if ( ! (test &
+                    (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_QUERY | TEST_SUMMARY | TEST_VERIFY)) ) {
                 report("failed: match was", NiL, re, s, len, NiL, flags, test);
                 matchprint(match, nmatch, nsub, ans, test);
             }
@@ -914,8 +835,7 @@ static int matchcheck(regmatch_t* match, int nmatch, int nsub, char* ans, char* 
     }
     for ( ; i < nmatch; i++ ) {
         if ( match[i].rm_so != -1 || match[i].rm_eo != -1 ) {
-            if ( ! (test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_QUERY |
-                            TEST_VERIFY)) ) {
+            if ( ! (test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_QUERY | TEST_VERIFY)) ) {
                 if ( (test & TEST_IGNORE_POSITION) && (match[i].rm_so < 0 || match[i].rm_eo < 0) ) {
                     state.ignored++;
                     return 0;
@@ -929,8 +849,8 @@ static int matchcheck(regmatch_t* match, int nmatch, int nsub, char* ans, char* 
         }
     }
     if ( ! (test & TEST_IGNORE_OVER) && match[nmatch].rm_so != state.NOMATCH.rm_so ) {
-        if ( ! (test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_QUERY |
-                        TEST_SUMMARY | TEST_VERIFY)) ) {
+        if ( ! (test &
+                (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_QUERY | TEST_SUMMARY | TEST_VERIFY)) ) {
             report("failed: overran match array", NiL, re, s, len, NiL, flags, test);
             matchprint(match, nmatch + 1, nsub, NiL, test);
         }
@@ -939,8 +859,7 @@ static int matchcheck(regmatch_t* match, int nmatch, int nsub, char* ans, char* 
     return 1;
 }
 
-static void sigunblock(int s)
-{
+static void sigunblock(int s) {
 #ifdef SIG_SETMASK
     int op;
     sigset_t mask;
@@ -960,30 +879,22 @@ static void sigunblock(int s)
 #endif
 }
 
-static void gotcha(int sig)
-{
+static void gotcha(int sig) {
     int ret;
 
     signal(sig, gotcha);
     alarm(0);
     state.signals++;
     switch ( sig ) {
-    case SIGALRM:
-        ret = REG_EHUNG;
-        break;
-    case SIGBUS:
-        ret = REG_EBUS;
-        break;
-    default:
-        ret = REG_EFAULT;
-        break;
+        case SIGALRM: ret = REG_EHUNG; break;
+        case SIGBUS: ret = REG_EBUS; break;
+        default: ret = REG_EFAULT; break;
     }
     sigunblock(sig);
     longjmp(state.gotcha, ret);
 }
 
-static char* mygetline(FILE* fp)
-{
+static char* mygetline(FILE* fp) {
     static char buf[32 * 1024];
 
     register char* s = buf;
@@ -1004,10 +915,8 @@ static char* mygetline(FILE* fp)
     return buf;
 }
 
-static unsigned long note(unsigned long level, char* msg, unsigned long skip, unsigned long test)
-{
-    if ( ! (test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_SUMMARY)) &&
-         ! skip ) {
+static unsigned long note(unsigned long level, char* msg, unsigned long skip, unsigned long test) {
+    if ( ! (test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_SUMMARY)) && ! skip ) {
         printf("NOTE\t");
         if ( msg )
             printf("%s: ", msg);
@@ -1020,10 +929,9 @@ static unsigned long note(unsigned long level, char* msg, unsigned long skip, un
 
 static char ts[] = "\t\t\t\t\t\t\t";
 
-static unsigned long extract(int* tabs, char* spec, char* re, char* s, char* ans, char* msg,
-                             char* accept, regmatch_t* match, int nmatch, int nsub,
-                             unsigned long skip, unsigned long level, unsigned long test)
-{
+static unsigned long extract(int* tabs, char* spec, char* re, char* s, char* ans, char* msg, char* accept,
+                             regmatch_t* match, int nmatch, int nsub, unsigned long skip, unsigned long level,
+                             unsigned long test) {
     if ( test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_OK | TEST_PASS | TEST_SUMMARY) ) {
         state.extracted = 1;
         if ( test & TEST_OK ) {
@@ -1077,10 +985,9 @@ static unsigned long extract(int* tabs, char* spec, char* re, char* s, char* ans
     return skip;
 }
 
-static int catchfree(regex_t* preg, int flags, int* tabs, char* spec, char* re, char* s, char* ans,
-                     char* msg, char* accept, regmatch_t* match, int nmatch, int nsub,
-                     unsigned long skip, unsigned long level, unsigned long test)
-{
+static int catchfree(regex_t* preg, int flags, int* tabs, char* spec, char* re, char* s, char* ans, char* msg,
+                     char* accept, regmatch_t* match, int nmatch, int nsub, unsigned long skip, unsigned long level,
+                     unsigned long test) {
     int eret;
 
     if ( ! (test & TEST_CATCH) ) {
@@ -1092,8 +999,7 @@ static int catchfree(regex_t* preg, int flags, int* tabs, char* spec, char* re, 
         regfree(preg);
         alarm(0);
     }
-    else if ( test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_QUERY |
-                      TEST_SUMMARY | TEST_VERIFY) )
+    else if ( test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_QUERY | TEST_SUMMARY | TEST_VERIFY) )
         extract(tabs, spec, re, s, ans, msg, NiL, NiL, 0, 0, skip, level, test);
     else {
         report("failed", "regfree", re, NiL, -1, msg, flags, test);
@@ -1102,8 +1008,7 @@ static int catchfree(regex_t* preg, int flags, int* tabs, char* spec, char* re, 
     return eret;
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     int flags = 0;
     int cflags;
     int eflags;
@@ -1159,74 +1064,40 @@ int main(int argc, char** argv)
     while ( (p = *++argv) && *p == '-' )
         for ( ;; ) {
             switch ( *++p ) {
-            case 0:
-                break;
-            case 'c':
-                test |= TEST_CATCH;
-                continue;
-            case 'e':
-                test |= TEST_IGNORE_ERROR;
-                continue;
-            case 'l':
-                flags |= REG_LAZY;
-                continue;
-            case 'h':
-            case '?':
-                help(0);
-                return 2;
-            case '-':
-                help(p[1] == 'h');
-                return 2;
-            case 'n':
-                nonexec = 1;
-                continue;
-            case 'o':
-                test |= TEST_IGNORE_OVER;
-                continue;
-            case 'p':
-                test |= TEST_IGNORE_POSITION;
-                continue;
-            case 's':
+                case 0: break;
+                case 'c': test |= TEST_CATCH; continue;
+                case 'e': test |= TEST_IGNORE_ERROR; continue;
+                case 'l': flags |= REG_LAZY; continue;
+                case 'h':
+                case '?': help(0); return 2;
+                case '-': help(p[1] == 'h'); return 2;
+                case 'n': nonexec = 1; continue;
+                case 'o': test |= TEST_IGNORE_OVER; continue;
+                case 'p': test |= TEST_IGNORE_POSITION; continue;
+                case 's':
 #ifdef REG_DISCIPLINE
-                if ( ! (state.stack = stkalloc(stkstd, 0)) )
-                    fprintf(stderr, "%s: out of space [stack]", unit);
-                state.disc.disc.re_resizef = resizef;
-                state.disc.disc.re_resizehandle = (void*)stkstd;
+                    if ( ! (state.stack = stkalloc(stkstd, 0)) )
+                        fprintf(stderr, "%s: out of space [stack]", unit);
+                    state.disc.disc.re_resizef = resizef;
+                    state.disc.disc.re_resizehandle = (void*)stkstd;
 #endif
-                continue;
-            case 'x':
-                nonosub = 1;
-                continue;
-            case 'v':
-                test |= TEST_VERBOSE;
-                continue;
-            case 'A':
-                test |= TEST_ACTUAL;
-                continue;
-            case 'B':
-                test |= TEST_BASELINE;
-                continue;
-            case 'F':
-                test |= TEST_FAIL;
-                continue;
-            case 'P':
-                test |= TEST_PASS;
-                continue;
-            case 'S':
-                test |= TEST_SUMMARY;
-                continue;
-            default:
-                fprintf(stderr, "%s: %c: invalid option\n", unit, *p);
-                return 2;
+                    continue;
+                case 'x': nonosub = 1; continue;
+                case 'v': test |= TEST_VERBOSE; continue;
+                case 'A': test |= TEST_ACTUAL; continue;
+                case 'B': test |= TEST_BASELINE; continue;
+                case 'F': test |= TEST_FAIL; continue;
+                case 'P': test |= TEST_PASS; continue;
+                case 'S': test |= TEST_SUMMARY; continue;
+                default: fprintf(stderr, "%s: %c: invalid option\n", unit, *p); return 2;
             }
             break;
         }
     if ( ! *argv )
         argv = filter;
     locale = 0;
-    while (( state.file = *argv++ )) {
-        if ( streq(state.file, "-") || streq(state.file, "/dev/stdin") ||
-             streq(state.file, "/dev/fd/0") ) {
+    while ( (state.file = *argv++) ) {
+        if ( streq(state.file, "-") || streq(state.file, "/dev/stdin") || streq(state.file, "/dev/fd/0") ) {
             state.file = 0;
             fp = stdin;
         }
@@ -1234,26 +1105,20 @@ int main(int argc, char** argv)
             fprintf(stderr, "%s: %s: cannot read\n", unit, state.file);
             return 2;
         }
-        testno = state.errors = state.ignored = state.lineno = state.passed = state.signals =
-            state.unspecified = state.warnings = 0;
+        testno = state.errors = state.ignored = state.lineno = state.passed = state.signals = state.unspecified =
+            state.warnings = 0;
         skip = 0;
         level = 1;
         if ( ! (test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_SUMMARY)) ) {
             printf("TEST\t%s ", unit);
-            if (( s = state.file )) {
+            if ( (s = state.file) ) {
                 subunit = p = 0;
                 for ( ;; ) {
                     switch ( *s++ ) {
-                    case 0:
-                        break;
-                    case '/':
-                        subunit = s;
-                        continue;
-                    case '.':
-                        p = s - 1;
-                        continue;
-                    default:
-                        continue;
+                        case 0: break;
+                        case '/': subunit = s; continue;
+                        case '.': p = s - 1; continue;
+                        default: continue;
                     }
                     break;
                 }
@@ -1323,7 +1188,7 @@ int main(int argc, char** argv)
             signal(SIGBUS, gotcha);
             signal(SIGSEGV, gotcha);
         }
-        while (( p = mygetline(fp) )) {
+        while ( (p = mygetline(fp)) ) {
             /* parse: */
 
             line = p;
@@ -1360,32 +1225,31 @@ int main(int argc, char** argv)
             field[i++] = p;
             for ( ;; ) {
                 switch ( *p++ ) {
-                case 0:
-                    p--;
-                    j = 0;
-                    goto checkfield;
-                case '\t':
-                    *(delim[i] = p - 1) = 0;
-                    j = 1;
-                checkfield:
-                    s = field[i - 1];
-                    if ( streq(s, "NIL") )
-                        field[i - 1] = 0;
-                    else if ( streq(s, "NULL") )
-                        *s = 0;
-                    while ( *p == '\t' ) {
-                        p++;
-                        j++;
-                    }
-                    tabs[i - 1] = j;
-                    if ( ! *p )
-                        break;
-                    if ( i >= elementsof(field) )
-                        bad("too many fields\n", NiL, NiL, 0, 0);
-                    field[i++] = p;
-                /*FALLTHROUGH*/
-                default:
-                    continue;
+                    case 0:
+                        p--;
+                        j = 0;
+                        goto checkfield;
+                    case '\t':
+                        *(delim[i] = p - 1) = 0;
+                        j = 1;
+                    checkfield:
+                        s = field[i - 1];
+                        if ( streq(s, "NIL") )
+                            field[i - 1] = 0;
+                        else if ( streq(s, "NULL") )
+                            *s = 0;
+                        while ( *p == '\t' ) {
+                            p++;
+                            j++;
+                        }
+                        tabs[i - 1] = j;
+                        if ( ! *p )
+                            break;
+                        if ( i >= elementsof(field) )
+                            bad("too many fields\n", NiL, NiL, 0, 0);
+                        field[i++] = p;
+                    /*FALLTHROUGH*/
+                    default: continue;
                 }
                 break;
             }
@@ -1409,208 +1273,139 @@ int main(int argc, char** argv)
                     continue;
                 }
                 switch ( *p ) {
-                case 'A':
-                    test |= TEST_ARE;
-                    continue;
-                case 'B':
-                    //					test |= TEST_BRE;
-                    continue;
-                case 'C':
-                    if ( ! (test & TEST_QUERY) && ! (skip & level) )
-                        bad("locale must be nested\n", NiL, NiL, 0, 0);
-                    test &= ~TEST_QUERY;
-                    if ( locale )
-                        bad("locale nesting not supported\n", NiL, NiL, 0, 0);
-                    if ( i != 2 )
-                        bad("locale field expected\n", NiL, NiL, 0, 0);
-                    if ( ! (skip & level) ) {
-#if defined(LC_COLLATE) && defined(LC_CTYPE)
-                        s = field[1];
-                        if ( ! s || streq(s, "POSIX") )
-                            s = "C";
-                        if ( ! (ans = setlocale(LC_COLLATE, s)) || streq(ans, "C") ||
-                             streq(ans, "POSIX") || ! (ans = setlocale(LC_CTYPE, s)) ||
-                             streq(ans, "C") || streq(ans, "POSIX") )
-                            skip = note(level, s, skip, test);
-                        else {
-                            if ( ! (test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS |
-                                            TEST_SUMMARY)) )
-                                printf("NOTE	\"%s\" locale\n", s);
-                            locale = level;
-                        }
-#else
-                        skip = note(level, skip, test, "locales not supported");
-#endif
-                    }
-                    cflags = NOTEST;
-                    continue;
-                case 'E':
-                    test |= TEST_ERE;
-                    continue;
-                case 'K':
-                    test |= TEST_KRE;
-                    continue;
-                case 'L':
-                    test |= TEST_LRE;
-                    continue;
-                case 'S':
-                    test |= TEST_SRE;
-                    continue;
-
-                case 'a':
-                    cflags |= REG_LEFT | REG_RIGHT;
-                    continue;
-                case 'b':
-                    eflags |= REG_NOTBOL;
-                    continue;
-                case 'c':
-                    cflags |= REG_COMMENT;
-                    continue;
-                case 'd':
-                    cflags |= REG_SHELL_DOT;
-                    continue;
-                case 'e':
-                    eflags |= REG_NOTEOL;
-                    continue;
-                case 'f':
-                    cflags |= REG_MULTIPLE;
-                    continue;
-                case 'g':
-                    cflags |= NOTEST;
-                    continue;
-                case 'h':
-                    cflags |= REG_MULTIREF;
-                    continue;
-                case 'i':
-                    cflags |= REG_ICASE;
-                    continue;
-                case 'j':
-                    cflags |= REG_SPAN;
-                    continue;
-                case 'k':
-                    cflags |= REG_ESCAPE;
-                    continue;
-                case 'l':
-                    cflags |= REG_LEFT;
-                    continue;
-                case 'm':
-                    cflags |= REG_MINIMAL;
-                    continue;
-                case 'n':
-                    cflags |= REG_NEWLINE;
-                    continue;
-                case 'o':
-                    cflags |= REG_SHELL_GROUP;
-                    continue;
-                case 'p':
-                    cflags |= REG_SHELL_PATH;
-                    continue;
-                case 'q':
-                    cflags |= REG_DELIMITED;
-                    continue;
-                case 'r':
-                    cflags |= REG_RIGHT;
-                    continue;
-                case 's':
-                    cflags |= REG_SHELL_ESCAPED;
-                    continue;
-                case 't':
-                    cflags |= REG_MUSTDELIM;
-                    continue;
-                case 'u':
-                    test |= TEST_UNSPECIFIED;
-                    continue;
-                case 'w':
-                    cflags |= REG_NOSUB;
-                    continue;
-                case 'x':
-                    if ( REG_LENIENT )
-                        cflags |= REG_LENIENT;
-                    else
-                        test |= TEST_LENIENT;
-                    continue;
-                case 'y':
-                    eflags |= REG_LEFT;
-                    continue;
-                case 'z':
-                    cflags |= REG_NULL;
-                    continue;
-                case '$':
-                    test |= TEST_EXPAND;
-                    continue;
-
-                case '/':
-                    test |= TEST_SUB;
-                    continue;
-
-                case '=':
-                    test |= TEST_DECOMP;
-                    continue;
-
-                case '?':
-                    test |= TEST_VERIFY;
-                    test &= ~(TEST_AND | TEST_OR);
-                    state.verify = state.passed;
-                    continue;
-                case '&':
-                    test |= TEST_VERIFY | TEST_AND;
-                    test &= ~TEST_OR;
-                    continue;
-                case '|':
-                    test |= TEST_VERIFY | TEST_OR;
-                    test &= ~TEST_AND;
-                    continue;
-                case ';':
-                    test |= TEST_OR;
-                    test &= ~TEST_AND;
-                    continue;
-
-                case '{':
-                    level <<= 1;
-                    if ( skip & (level >> 1) ) {
-                        skip |= level;
-                        cflags = NOTEST;
-                    }
-                    else {
-                        skip &= ~level;
-                        test |= TEST_QUERY;
-                    }
-                    continue;
-                case '}':
-                    if ( level == 1 )
-                        bad("invalid {...} nesting\n", NiL, NiL, 0, 0);
-                    if ( (skip & level) && ! (skip & (level >> 1)) ) {
-                        if ( ! (test & (TEST_BASELINE | TEST_SUMMARY)) ) {
-                            if ( test & (TEST_ACTUAL | TEST_FAIL) )
-                                printf("}\n");
-                            else if ( ! (test & TEST_PASS) )
-                                printf("-%d\n", state.lineno);
-                        }
-                    }
-#if defined(LC_COLLATE) && defined(LC_CTYPE)
-                    else if ( locale & level ) {
-                        locale = 0;
+                    case 'A': test |= TEST_ARE; continue;
+                    case 'B':
+                        //					test |= TEST_BRE;
+                        continue;
+                    case 'C':
+                        if ( ! (test & TEST_QUERY) && ! (skip & level) )
+                            bad("locale must be nested\n", NiL, NiL, 0, 0);
+                        test &= ~TEST_QUERY;
+                        if ( locale )
+                            bad("locale nesting not supported\n", NiL, NiL, 0, 0);
+                        if ( i != 2 )
+                            bad("locale field expected\n", NiL, NiL, 0, 0);
                         if ( ! (skip & level) ) {
-                            s = "C";
-                            setlocale(LC_COLLATE, s);
-                            setlocale(LC_CTYPE, s);
-                            if ( ! (test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS |
-                                            TEST_SUMMARY)) )
-                                printf("NOTE	\"%s\" locale\n", s);
-                            else if ( test & (TEST_ACTUAL | TEST_BASELINE | TEST_PASS) )
+#if defined(LC_COLLATE) && defined(LC_CTYPE)
+                            s = field[1];
+                            if ( ! s || streq(s, "POSIX") )
+                                s = "C";
+                            if ( ! (ans = setlocale(LC_COLLATE, s)) || streq(ans, "C") || streq(ans, "POSIX") ||
+                                 ! (ans = setlocale(LC_CTYPE, s)) || streq(ans, "C") || streq(ans, "POSIX") )
+                                skip = note(level, s, skip, test);
+                            else {
+                                if ( ! (test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_SUMMARY)) )
+                                    printf("NOTE	\"%s\" locale\n", s);
+                                locale = level;
+                            }
+#else
+                            skip = note(level, skip, test, "locales not supported");
+#endif
+                        }
+                        cflags = NOTEST;
+                        continue;
+                    case 'E': test |= TEST_ERE; continue;
+                    case 'K': test |= TEST_KRE; continue;
+                    case 'L': test |= TEST_LRE; continue;
+                    case 'S': test |= TEST_SRE; continue;
+
+                    case 'a': cflags |= REG_LEFT | REG_RIGHT; continue;
+                    case 'b': eflags |= REG_NOTBOL; continue;
+                    case 'c': cflags |= REG_COMMENT; continue;
+                    case 'd': cflags |= REG_SHELL_DOT; continue;
+                    case 'e': eflags |= REG_NOTEOL; continue;
+                    case 'f': cflags |= REG_MULTIPLE; continue;
+                    case 'g': cflags |= NOTEST; continue;
+                    case 'h': cflags |= REG_MULTIREF; continue;
+                    case 'i': cflags |= REG_ICASE; continue;
+                    case 'j': cflags |= REG_SPAN; continue;
+                    case 'k': cflags |= REG_ESCAPE; continue;
+                    case 'l': cflags |= REG_LEFT; continue;
+                    case 'm': cflags |= REG_MINIMAL; continue;
+                    case 'n': cflags |= REG_NEWLINE; continue;
+                    case 'o': cflags |= REG_SHELL_GROUP; continue;
+                    case 'p': cflags |= REG_SHELL_PATH; continue;
+                    case 'q': cflags |= REG_DELIMITED; continue;
+                    case 'r': cflags |= REG_RIGHT; continue;
+                    case 's': cflags |= REG_SHELL_ESCAPED; continue;
+                    case 't': cflags |= REG_MUSTDELIM; continue;
+                    case 'u': test |= TEST_UNSPECIFIED; continue;
+                    case 'w': cflags |= REG_NOSUB; continue;
+                    case 'x':
+                        if ( REG_LENIENT )
+                            cflags |= REG_LENIENT;
+                        else
+                            test |= TEST_LENIENT;
+                        continue;
+                    case 'y': eflags |= REG_LEFT; continue;
+                    case 'z': cflags |= REG_NULL; continue;
+                    case '$': test |= TEST_EXPAND; continue;
+
+                    case '/': test |= TEST_SUB; continue;
+
+                    case '=': test |= TEST_DECOMP; continue;
+
+                    case '?':
+                        test |= TEST_VERIFY;
+                        test &= ~(TEST_AND | TEST_OR);
+                        state.verify = state.passed;
+                        continue;
+                    case '&':
+                        test |= TEST_VERIFY | TEST_AND;
+                        test &= ~TEST_OR;
+                        continue;
+                    case '|':
+                        test |= TEST_VERIFY | TEST_OR;
+                        test &= ~TEST_AND;
+                        continue;
+                    case ';':
+                        test |= TEST_OR;
+                        test &= ~TEST_AND;
+                        continue;
+
+                    case '{':
+                        level <<= 1;
+                        if ( skip & (level >> 1) ) {
+                            skip |= level;
+                            cflags = NOTEST;
+                        }
+                        else {
+                            skip &= ~level;
+                            test |= TEST_QUERY;
+                        }
+                        continue;
+                    case '}':
+                        if ( level == 1 )
+                            bad("invalid {...} nesting\n", NiL, NiL, 0, 0);
+                        if ( (skip & level) && ! (skip & (level >> 1)) ) {
+                            if ( ! (test & (TEST_BASELINE | TEST_SUMMARY)) ) {
+                                if ( test & (TEST_ACTUAL | TEST_FAIL) )
+                                    printf("}\n");
+                                else if ( ! (test & TEST_PASS) )
+                                    printf("-%d\n", state.lineno);
+                            }
+                        }
+#if defined(LC_COLLATE) && defined(LC_CTYPE)
+                        else if ( locale & level ) {
+                            locale = 0;
+                            if ( ! (skip & level) ) {
+                                s = "C";
+                                setlocale(LC_COLLATE, s);
+                                setlocale(LC_CTYPE, s);
+                                if ( ! (test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_SUMMARY)) )
+                                    printf("NOTE	\"%s\" locale\n", s);
+                                else if ( test & (TEST_ACTUAL | TEST_BASELINE | TEST_PASS) )
+                                    printf("}\n");
+                            }
+                            else if ( test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL) )
                                 printf("}\n");
                         }
-                        else if ( test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL) )
-                            printf("}\n");
-                    }
 #endif
-                    level >>= 1;
-                    cflags = NOTEST;
-                    continue;
+                        level >>= 1;
+                        cflags = NOTEST;
+                        continue;
 
-                default:
-                    bad("bad spec\n", spec, NiL, 0, test);
-                    break;
+                    default: bad("bad spec\n", spec, NiL, 0, test); break;
                 }
                 break;
             }
@@ -1641,7 +1436,7 @@ int main(int argc, char** argv)
                 bad("too few fields\n", NiL, NiL, 0, test);
             while ( i < elementsof(field) )
                 field[i++] = 0;
-            if (( re = field[1] )) {
+            if ( (re = field[1]) ) {
                 if ( streq(re, "SAME") ) {
                     re = ppat;
                     test |= TEST_SAME;
@@ -1736,8 +1531,7 @@ int main(int argc, char** argv)
 #endif
             {
                 if ( test & (TEST_BASELINE | TEST_PASS | TEST_VERIFY) )
-                    extract(tabs, line, re, s, ans, msg, NiL, NiL, 0, 0, skip, level,
-                            test | TEST_OK);
+                    extract(tabs, line, re, s, ans, msg, NiL, NiL, 0, 0, skip, level, test | TEST_OK);
                 continue;
             }
             if ( (test & (TEST_QUERY | TEST_VERBOSE | TEST_VERIFY)) == TEST_VERBOSE ) {
@@ -1787,8 +1581,7 @@ int main(int argc, char** argv)
                     alarm(0);
                 }
                 if ( ! cret && *(p += preg.re_npat) && ! (preg.re_sub->re_flags & REG_SUB_LAST) ) {
-                    if ( catchfree(&preg, flags, tabs, line, re, s, ans, msg, NiL, NiL, 0, 0, skip,
-                                   level, test) )
+                    if ( catchfree(&preg, flags, tabs, line, re, s, ans, msg, NiL, NiL, 0, 0, skip, level, test) )
                         continue;
                     cret = REG_EFLAGS;
                 }
@@ -1810,8 +1603,7 @@ int main(int argc, char** argv)
                     alarm(0);
                 }
                 if ( ! cret ) {
-                    catchfree(&preg, flags, tabs, line, re, s, ans, msg, NiL, NiL, 0, 0, skip,
-                              level, test);
+                    catchfree(&preg, flags, tabs, line, re, s, ans, msg, NiL, NiL, 0, 0, skip, level, test);
                     if ( i > j ) {
                         if ( i != (strlen(ans) + 1) ) {
                             report("failed", fun, re, s, nstr, msg, flags, test);
@@ -1843,14 +1635,13 @@ int main(int argc, char** argv)
                         }
                         else if ( nsub != preg.re_nsub ) {
                             if ( nsub > preg.re_nsub ) {
-                                if ( test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS |
-                                             TEST_QUERY | TEST_SUMMARY | TEST_VERIFY) )
-                                    skip = extract(tabs, line, re, s, ans, msg, "OK", NiL, 0, 0,
-                                                   skip, level, test | TEST_DELIMIT);
+                                if ( test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_QUERY |
+                                             TEST_SUMMARY | TEST_VERIFY) )
+                                    skip = extract(tabs, line, re, s, ans, msg, "OK", NiL, 0, 0, skip, level,
+                                                   test | TEST_DELIMIT);
                                 else {
                                     report("re_nsub incorrect", fun, re, NiL, -1, msg, flags, test);
-                                    printf("at least %d expected, %zu returned\n", nsub,
-                                           preg.re_nsub);
+                                    printf("at least %d expected, %zu returned\n", nsub, preg.re_nsub);
                                     state.errors++;
                                 }
                             }
@@ -1859,18 +1650,16 @@ int main(int argc, char** argv)
                         }
                     }
                 }
-                if ( ! (test & (TEST_DECOMP | TEST_SUB)) && *ans && *ans != '(' &&
-                     ! streq(ans, "OK") && ! streq(ans, "NOMATCH") ) {
-                    if ( test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_QUERY |
-                                 TEST_SUMMARY | TEST_VERIFY) )
-                        skip = extract(tabs, line, re, s, ans, msg, "OK", NiL, 0, 0, skip, level,
-                                       test | TEST_DELIMIT);
+                if ( ! (test & (TEST_DECOMP | TEST_SUB)) && *ans && *ans != '(' && ! streq(ans, "OK") &&
+                     ! streq(ans, "NOMATCH") ) {
+                    if ( test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_QUERY | TEST_SUMMARY |
+                                 TEST_VERIFY) )
+                        skip = extract(tabs, line, re, s, ans, msg, "OK", NiL, 0, 0, skip, level, test | TEST_DELIMIT);
                     else if ( ! (test & TEST_LENIENT) ) {
                         report("failed", fun, re, NiL, -1, msg, flags, test);
                         printf("%s expected, OK returned\n", ans);
                     }
-                    catchfree(&preg, flags, tabs, line, re, s, ans, msg, NiL, NiL, 0, 0, skip,
-                              level, test);
+                    catchfree(&preg, flags, tabs, line, re, s, ans, msg, NiL, NiL, 0, 0, skip, level, test);
                     continue;
                 }
             }
@@ -1882,10 +1671,10 @@ int main(int argc, char** argv)
                     for ( i = 1; i < elementsof(codes); i++ )
                         if ( cret == codes[i].code )
                             got = i;
-                    if ( test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_QUERY |
-                                 TEST_SUMMARY | TEST_VERIFY) )
-                        skip = extract(tabs, line, re, s, ans, msg, codes[got].name, NiL, 0, 0,
-                                       skip, level, test | TEST_DELIMIT);
+                    if ( test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_QUERY | TEST_SUMMARY |
+                                 TEST_VERIFY) )
+                        skip = extract(tabs, line, re, s, ans, msg, codes[got].name, NiL, 0, 0, skip, level,
+                                       test | TEST_DELIMIT);
                     else {
                         report("failed", fun, re, NiL, -1, msg, flags, test);
                         printf("%s returned: ", codes[got].name);
@@ -1901,21 +1690,20 @@ int main(int argc, char** argv)
                             got = i;
                     }
                     if ( ! expected ) {
-                        if ( test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS |
-                                     TEST_QUERY | TEST_SUMMARY | TEST_VERIFY) )
-                            skip = extract(tabs, line, re, s, ans, msg, codes[got].name, NiL, 0, 0,
-                                           skip, level, test | TEST_DELIMIT);
+                        if ( test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_QUERY | TEST_SUMMARY |
+                                     TEST_VERIFY) )
+                            skip = extract(tabs, line, re, s, ans, msg, codes[got].name, NiL, 0, 0, skip, level,
+                                           test | TEST_DELIMIT);
                         else {
-                            report("failed: invalid error code", NiL, re, NiL, -1, msg, flags,
-                                   test);
+                            report("failed: invalid error code", NiL, re, NiL, -1, msg, flags, test);
                             printf("%s expected, %s returned\n", ans, codes[got].name);
                         }
                     }
                     else if ( cret != codes[expected].code && cret != REG_BADPAT ) {
-                        if ( test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS |
-                                     TEST_QUERY | TEST_SUMMARY | TEST_VERIFY) )
-                            skip = extract(tabs, line, re, s, ans, msg, codes[got].name, NiL, 0, 0,
-                                           skip, level, test | TEST_DELIMIT);
+                        if ( test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_QUERY | TEST_SUMMARY |
+                                     TEST_VERIFY) )
+                            skip = extract(tabs, line, re, s, ans, msg, codes[got].name, NiL, 0, 0, skip, level,
+                                           test | TEST_DELIMIT);
                         else if ( test & TEST_IGNORE_ERROR )
                             state.ignored++;
                         else {
@@ -1972,10 +1760,10 @@ int main(int argc, char** argv)
             if ( flags & REG_NOSUB ) {
                 if ( eret ) {
                     if ( eret != REG_NOMATCH || ! streq(ans, "NOMATCH") ) {
-                        if ( test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS |
-                                     TEST_QUERY | TEST_SUMMARY | TEST_VERIFY) )
-                            skip = extract(tabs, line, re, s, ans, msg, "NOMATCH", NiL, 0, 0, skip,
-                                           level, test | TEST_DELIMIT);
+                        if ( test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_QUERY | TEST_SUMMARY |
+                                     TEST_VERIFY) )
+                            skip = extract(tabs, line, re, s, ans, msg, "NOMATCH", NiL, 0, 0, skip, level,
+                                           test | TEST_DELIMIT);
                         else {
                             report("REG_NOSUB failed", fun, re, s, nstr, msg, flags, test);
                             error(&preg, eret);
@@ -1983,10 +1771,10 @@ int main(int argc, char** argv)
                     }
                 }
                 else if ( streq(ans, "NOMATCH") ) {
-                    if ( test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_QUERY |
-                                 TEST_SUMMARY | TEST_VERIFY) )
-                        skip = extract(tabs, line, re, s, ans, msg, NiL, match, nmatch, nsub, skip,
-                                       level, test | TEST_DELIMIT);
+                    if ( test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_QUERY | TEST_SUMMARY |
+                                 TEST_VERIFY) )
+                        skip = extract(tabs, line, re, s, ans, msg, NiL, match, nmatch, nsub, skip, level,
+                                       test | TEST_DELIMIT);
                     else {
                         report("should fail and didn't", fun, re, s, nstr, msg, flags, test);
                         error(&preg, eret);
@@ -1995,10 +1783,10 @@ int main(int argc, char** argv)
             }
             else if ( eret ) {
                 if ( eret != REG_NOMATCH || ! streq(ans, "NOMATCH") ) {
-                    if ( test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_QUERY |
-                                 TEST_SUMMARY | TEST_VERIFY) )
-                        skip = extract(tabs, line, re, s, ans, msg, "NOMATCH", NiL, 0, nsub, skip,
-                                       level, test | TEST_DELIMIT);
+                    if ( test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_QUERY | TEST_SUMMARY |
+                                 TEST_VERIFY) )
+                        skip = extract(tabs, line, re, s, ans, msg, "NOMATCH", NiL, 0, nsub, skip, level,
+                                       test | TEST_DELIMIT);
                     else {
                         report("failed", fun, re, s, nstr, msg, flags, test);
                         if ( eret != REG_NOMATCH )
@@ -2011,10 +1799,10 @@ int main(int argc, char** argv)
                 }
             }
             else if ( streq(ans, "NOMATCH") ) {
-                if ( test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_QUERY |
-                             TEST_SUMMARY | TEST_VERIFY) )
-                    skip = extract(tabs, line, re, s, ans, msg, NiL, match, nmatch, nsub, skip,
-                                   level, test | TEST_DELIMIT);
+                if ( test &
+                     (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_QUERY | TEST_SUMMARY | TEST_VERIFY) )
+                    skip = extract(tabs, line, re, s, ans, msg, NiL, match, nmatch, nsub, skip, level,
+                                   test | TEST_DELIMIT);
                 else {
                     report("should fail and didn't", fun, re, s, nstr, msg, flags, test);
                     matchprint(match, nmatch, nsub, NiL, test);
@@ -2034,13 +1822,11 @@ int main(int argc, char** argv)
 #endif
             else if ( ! *ans ) {
                 if ( match[0].rm_so != state.NOMATCH.rm_so ) {
-                    if ( test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_QUERY |
-                                 TEST_SUMMARY | TEST_VERIFY) )
-                        skip =
-                            extract(tabs, line, re, s, ans, msg, NiL, NiL, 0, 0, skip, level, test);
+                    if ( test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_QUERY | TEST_SUMMARY |
+                                 TEST_VERIFY) )
+                        skip = extract(tabs, line, re, s, ans, msg, NiL, NiL, 0, 0, skip, level, test);
                     else {
-                        report("failed: no match but match array assigned", NiL, re, s, nstr, msg,
-                               flags, test);
+                        report("failed: no match but match array assigned", NiL, re, s, nstr, msg, flags, test);
                         matchprint(match, nmatch, nsub, NiL, test);
                     }
                 }
@@ -2055,30 +1841,24 @@ int main(int argc, char** argv)
                 }
 #endif
                 if ( ! (test & (TEST_DECOMP | TEST_SUB | TEST_VERIFY)) && ! nonosub ) {
-                    if ( catchfree(&preg, flags, tabs, line, re, s, ans, msg, NiL, NiL, 0, 0, skip,
-                                   level, test) )
+                    if ( catchfree(&preg, flags, tabs, line, re, s, ans, msg, NiL, NiL, 0, 0, skip, level, test) )
                         continue;
                     flags |= REG_NOSUB;
                     goto nosub;
                 }
                 if ( test & (TEST_BASELINE | TEST_PASS | TEST_VERIFY) )
-                    skip = extract(tabs, line, re, s, ans, msg, NiL, match, nmatch, nsub, skip,
-                                   level, test | TEST_OK);
+                    skip = extract(tabs, line, re, s, ans, msg, NiL, match, nmatch, nsub, skip, level, test | TEST_OK);
             }
-            else if ( test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_QUERY |
-                              TEST_SUMMARY | TEST_VERIFY) )
-                skip = extract(tabs, line, re, s, ans, msg, NiL, match, nmatch, nsub, skip, level,
-                               test | TEST_DELIMIT);
-            if ( catchfree(&preg, flags, tabs, line, re, s, ans, msg, NiL, NiL, 0, 0, skip, level,
-                           test) )
+            else if ( test &
+                      (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS | TEST_QUERY | TEST_SUMMARY | TEST_VERIFY) )
+                skip = extract(tabs, line, re, s, ans, msg, NiL, match, nmatch, nsub, skip, level, test | TEST_DELIMIT);
+            if ( catchfree(&preg, flags, tabs, line, re, s, ans, msg, NiL, NiL, 0, 0, skip, level, test) )
                 continue;
             goto compile;
         }
         if ( test & TEST_SUMMARY )
-            printf(
-                "tests=%-4d errors=%-4d warnings=%-2d ignored=%-2d unspecified=%-2d signals=%d\n",
-                testno, state.errors, state.warnings, state.ignored, state.unspecified,
-                state.signals);
+            printf("tests=%-4d errors=%-4d warnings=%-2d ignored=%-2d unspecified=%-2d signals=%d\n", testno,
+                   state.errors, state.warnings, state.ignored, state.unspecified, state.signals);
         else if ( ! (test & (TEST_ACTUAL | TEST_BASELINE | TEST_FAIL | TEST_PASS)) ) {
             printf("TEST\t%s", unit);
             if ( subunit )
@@ -2089,8 +1869,7 @@ int main(int argc, char** argv)
             if ( state.warnings )
                 printf(", %d warning%s", state.warnings, state.warnings == 1 ? "" : "s");
             if ( state.unspecified )
-                printf(", %d unspecified difference%s", state.unspecified,
-                       state.unspecified == 1 ? "" : "s");
+                printf(", %d unspecified difference%s", state.unspecified, state.unspecified == 1 ? "" : "s");
             if ( state.signals )
                 printf(", %d signal%s", state.signals, state.signals == 1 ? "" : "s");
             printf(", %d error%s\n", state.errors, state.errors == 1 ? "" : "s");

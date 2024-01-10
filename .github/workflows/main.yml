@@ -1,0 +1,31 @@
+name: CI pipeline
+
+on: push
+
+jobs:
+  ubuntu_latest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Prepare
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          sudo apt-get update
+          sudo pip3 install btest pre-commit
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build
+        run: |
+          make
+
+      - name: Test
+        run: |
+          make test
+
+      - name: Check code
+        run: |
+          pre-commit run -a --show-diff-on-failure

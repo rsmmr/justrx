@@ -1,15 +1,13 @@
 
 DECLARE_SET(foo, int, int, SET_STD_EQUAL)
 
-static void print_set(set_foo* f)
-{
+static void print_set(set_foo* f) {
     printf("size %d |", set_foo_size(f));
     set_for_each(foo, f, i) printf("%d ", i);
     printf("\n");
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     set_foo* s = set_foo_create(0);
     print_set(s);
     printf("empty: %d (1)\n", set_foo_empty(s));
