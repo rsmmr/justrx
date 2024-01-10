@@ -6,10 +6,10 @@
 #ifndef JRX_INTERN_H
 #define JRX_INTERN_H
 
+#include <stdint.h>
+
 #include "jrx.h"
 #include "mem-mgt.h"
-
-#include <stdint.h>
 
 // Predefined constants.
 static const jrx_char JRX_CHAR_MAX = UINT32_MAX;    // Max. codepoint.

@@ -1,15 +1,15 @@
 // $Id$
 
 #include "ccl.h"
-#include "jlocale.h"
-#include "jrx-intern.h"
-#include "util.h"
 
 #include <stdlib.h>
 #include <string.h>
 
-static jrx_ccl* _ccl_create_epsilon()
-{
+#include "jlocale.h"
+#include "jrx-intern.h"
+#include "util.h"
+
+static jrx_ccl* _ccl_create_epsilon() {
     jrx_ccl* ccl = (jrx_ccl*)malloc(sizeof(jrx_ccl));
     ccl->id = 0;
     ccl->group = 0;
@@ -18,16 +18,14 @@ static jrx_ccl* _ccl_create_epsilon()
     return ccl;
 }
 
-static jrx_ccl* _ccl_create_empty()
-{
+static jrx_ccl* _ccl_create_empty() {
     jrx_ccl* ccl = _ccl_create_epsilon();
     ccl->ranges = set_char_range_create(0);
     return ccl;
 }
 
 // Not exposed; delete whole CCL group instead.
-static void _ccl_delete(jrx_ccl* ccl)
-{
+static void _ccl_delete(jrx_ccl* ccl) {
     if ( ccl->group ) {
         vec_ccl_set(ccl->group->ccls, ccl->id, 0);
         ccl->group = 0;
@@ -39,8 +37,7 @@ static void _ccl_delete(jrx_ccl* ccl)
     free(ccl);
 }
 
-static int _ccl_is_part_of(jrx_ccl* ccl1, jrx_ccl* ccl2)
-{
+static int _ccl_is_part_of(jrx_ccl* ccl1, jrx_ccl* ccl2) {
     if ( ccl1->assertions != ccl2->assertions )
         return 0;
 
@@ -50,11 +47,9 @@ static int _ccl_is_part_of(jrx_ccl* ccl1, jrx_ccl* ccl2)
     if ( ! ccl2->ranges )
         return 0;
 
-    set_for_each(char_range, ccl1->ranges, r1)
-    {
+    set_for_each(char_range, ccl1->ranges, r1) {
         int found = 0;
-        set_for_each(char_range, ccl2->ranges, r2)
-        {
+        set_for_each(char_range, ccl2->ranges, r2) {
             if ( r1.begin >= r2.begin && r1.end <= r2.end )
                 found = 1;
         }
@@ -66,8 +61,7 @@ static int _ccl_is_part_of(jrx_ccl* ccl1, jrx_ccl* ccl2)
     return 1;
 }
 
-static int _ccl_compare(jrx_ccl* ccl1, jrx_ccl* ccl2)
-{
+static int _ccl_compare(jrx_ccl* ccl1, jrx_ccl* ccl2) {
     if ( ccl1->assertions != ccl2->assertions )
         return 0;
 
@@ -77,10 +71,8 @@ static int _ccl_compare(jrx_ccl* ccl1, jrx_ccl* ccl2)
     return p1 && p2;
 }
 
-static jrx_ccl* _ccl_group_find(jrx_ccl_group* group, jrx_ccl* ccl)
-{
-    vec_for_each(ccl, group->ccls, gccl)
-    {
+static jrx_ccl* _ccl_group_find(jrx_ccl_group* group, jrx_ccl* ccl) {
+    vec_for_each(ccl, group->ccls, gccl) {
         if ( gccl && _ccl_compare(ccl, gccl) )
             return gccl;
     }
@@ -88,8 +80,7 @@ static jrx_ccl* _ccl_group_find(jrx_ccl_group* group, jrx_ccl* ccl)
     return 0;
 }
 
-static jrx_ccl* _ccl_group_add_to(jrx_ccl_group* group, jrx_ccl* ccl)
-{
+static jrx_ccl* _ccl_group_add_to(jrx_ccl_group* group, jrx_ccl* ccl) {
     jrx_ccl* existing = _ccl_group_find(group, ccl);
     if ( existing ) {
         if ( existing != ccl )
@@ -105,8 +96,7 @@ static jrx_ccl* _ccl_group_add_to(jrx_ccl_group* group, jrx_ccl* ccl)
     return ccl;
 }
 
-static jrx_ccl* _ccl_copy(jrx_ccl* ccl)
-{
+static jrx_ccl* _ccl_copy(jrx_ccl* ccl) {
     jrx_ccl* copy = _ccl_create_epsilon();
     copy->assertions = ccl->assertions;
     copy->ranges = ccl->ranges ? set_char_range_copy(ccl->ranges) : 0;
@@ -114,16 +104,14 @@ static jrx_ccl* _ccl_copy(jrx_ccl* ccl)
 }
 
 // Deletes empty ranges from CCL.
-static void _ccl_cleanup(jrx_ccl* ccl)
-{
+static void _ccl_cleanup(jrx_ccl* ccl) {
     if ( ! ccl->ranges )
         return;
 
     set_char_range* nranges = set_char_range_create(0);
 
     // Keep only non-empty intervals.
-    set_for_each(char_range, ccl->ranges, r)
-    {
+    set_for_each(char_range, ccl->ranges, r) {
         if ( r.begin < r.end )
             set_char_range_insert(nranges, r);
     }
@@ -132,15 +120,13 @@ static void _ccl_cleanup(jrx_ccl* ccl)
     ccl->ranges = nranges;
 }
 
-static void _ccl_subtract_range(jrx_ccl* ccl, jrx_char_range sub)
-{
+static void _ccl_subtract_range(jrx_ccl* ccl, jrx_char_range sub) {
     if ( ! ccl->ranges )
         return;
 
     set_char_range* addlranges = set_char_range_create(0);
 
-    set_for_each(char_range, ccl->ranges, r)
-    {
+    set_for_each(char_range, ccl->ranges, r) {
         if ( sub.begin >= r.begin && sub.begin <= r.end ) {
             if ( sub.end >= r.begin && sub.end <= r.end ) {
                 // Need to split range.
@@ -176,8 +162,7 @@ static void _ccl_subtract_range(jrx_ccl* ccl, jrx_char_range sub)
     ccl->ranges = addlranges;
 }
 
-static void _ccl_subtract(jrx_ccl* ccl1, jrx_ccl* ccl2)
-{
+static void _ccl_subtract(jrx_ccl* ccl1, jrx_ccl* ccl2) {
     if ( ! ccl2->ranges )
         return;
 
@@ -189,8 +174,7 @@ static void _ccl_subtract(jrx_ccl* ccl1, jrx_ccl* ccl2)
     _ccl_cleanup(ccl1);
 }
 
-static jrx_ccl* _ccl_intersect(jrx_ccl* ccl1, jrx_ccl* ccl2)
-{
+static jrx_ccl* _ccl_intersect(jrx_ccl* ccl1, jrx_ccl* ccl2) {
     if ( ! (ccl1->ranges && ccl2->ranges) )
         return 0;
 
@@ -199,10 +183,8 @@ static jrx_ccl* _ccl_intersect(jrx_ccl* ccl1, jrx_ccl* ccl2)
 
     set_char_range* nranges = set_char_range_create(0);
 
-    set_for_each(char_range, ccl1->ranges, r1)
-    {
-        set_for_each(char_range, ccl2->ranges, r2)
-        {
+    set_for_each(char_range, ccl1->ranges, r1) {
+        set_for_each(char_range, ccl2->ranges, r2) {
             if ( r2.begin >= r1.begin && r2.begin <= r1.end ) {
                 jrx_char_range nr = {r2.begin, (r1.end < r2.end ? r1.end : r2.end)};
                 set_char_range_insert(nranges, nr);
@@ -236,21 +218,17 @@ static jrx_ccl* _ccl_intersect(jrx_ccl* ccl1, jrx_ccl* ccl2)
 
     _ccl_delete(nccl);
     return 0;
-
 }
 
-jrx_ccl_group* ccl_group_create()
-{
+jrx_ccl_group* ccl_group_create() {
     jrx_ccl_group* group = (jrx_ccl_group*)malloc(sizeof(jrx_ccl_group));
     group->std_ccls = vec_std_ccl_create(0);
     group->ccls = vec_ccl_create(0);
     return group;
 }
 
-void ccl_group_delete(jrx_ccl_group* group)
-{
-    vec_for_each(ccl, group->ccls, ccl)
-    {
+void ccl_group_delete(jrx_ccl_group* group) {
+    vec_for_each(ccl, group->ccls, ccl) {
         if ( ccl )
             _ccl_delete(ccl);
     }
@@ -261,10 +239,8 @@ void ccl_group_delete(jrx_ccl_group* group)
     free(group);
 }
 
-void ccl_group_print(jrx_ccl_group* group, FILE* file)
-{
-    vec_for_each(ccl, group->ccls, ccl)
-    {
+void ccl_group_print(jrx_ccl_group* group, FILE* file) {
+    vec_for_each(ccl, group->ccls, ccl) {
         fputs("  ", file);
         if ( ccl )
             ccl_print(ccl, file);
@@ -272,62 +248,44 @@ void ccl_group_print(jrx_ccl_group* group, FILE* file)
     }
 }
 
-jrx_ccl* ccl_empty(jrx_ccl_group* group)
-{
+jrx_ccl* ccl_empty(jrx_ccl_group* group) {
     jrx_ccl* ccl = _ccl_create_empty();
     return _ccl_group_add_to(group, ccl);
 }
 
-jrx_ccl* ccl_from_range(jrx_ccl_group* group, jrx_char begin, jrx_char end)
-{
+jrx_ccl* ccl_from_range(jrx_ccl_group* group, jrx_char begin, jrx_char end) {
     jrx_ccl* ccl = _ccl_create_empty();
     jrx_char_range r = {begin, end};
     set_char_range_insert(ccl->ranges, r);
     return _ccl_group_add_to(group, ccl);
 }
 
-jrx_ccl* ccl_from_std_ccl(jrx_ccl_group* group, jrx_std_ccl std)
-{
+jrx_ccl* ccl_from_std_ccl(jrx_ccl_group* group, jrx_std_ccl std) {
     jrx_ccl* ccl = vec_std_ccl_get(group->std_ccls, std);
 
     if ( ccl )
         return ccl;
 
     switch ( std ) {
-    case JRX_STD_CCL_EPSILON:
-        ccl = _ccl_create_epsilon();
-        break;
+        case JRX_STD_CCL_EPSILON: ccl = _ccl_create_epsilon(); break;
 
-    case JRX_STD_CCL_ANY:
-        ccl = ccl_from_range(group, 0, JRX_CHAR_MAX);
-        break;
+        case JRX_STD_CCL_ANY: ccl = ccl_from_range(group, 0, JRX_CHAR_MAX); break;
 
-    case JRX_STD_CCL_LOWER:
-        ccl = local_ccl_lower(group);
-        break;
+        case JRX_STD_CCL_LOWER: ccl = local_ccl_lower(group); break;
 
-    case JRX_STD_CCL_UPPER:
-        ccl = local_ccl_upper(group);
-        break;
+        case JRX_STD_CCL_UPPER: ccl = local_ccl_upper(group); break;
 
-    case JRX_STD_CCL_WORD:
-        ccl = local_ccl_word(group);
-        break;
+        case JRX_STD_CCL_WORD: ccl = local_ccl_word(group); break;
 
-    case JRX_STD_CCL_DIGIT:
-        ccl = local_ccl_digit(group);
-        break;
+        case JRX_STD_CCL_DIGIT: ccl = local_ccl_digit(group); break;
 
-    case JRX_STD_CCL_BLANK:
-        ccl = local_ccl_blank(group);
-        break;
+        case JRX_STD_CCL_BLANK: ccl = local_ccl_blank(group); break;
 
-    case JRX_STD_CCL_ERROR:
-        ccl = _ccl_create_empty(); // just a fall-back, error should be called elsewhere
-        break;
+        case JRX_STD_CCL_ERROR:
+            ccl = _ccl_create_empty(); // just a fall-back, error should be called elsewhere
+            break;
 
-    default:
-        jrx_internal_error("ccl_from_std_ccl: unknown std_ccl type");
+        default: jrx_internal_error("ccl_from_std_ccl: unknown std_ccl type");
     }
 
     assert(ccl);
@@ -337,18 +295,11 @@ jrx_ccl* ccl_from_std_ccl(jrx_ccl_group* group, jrx_std_ccl std)
     return ccl;
 }
 
-extern jrx_ccl* ccl_any(jrx_ccl_group* group)
-{
-    return ccl_from_std_ccl(group, JRX_STD_CCL_ANY);
-}
+extern jrx_ccl* ccl_any(jrx_ccl_group* group) { return ccl_from_std_ccl(group, JRX_STD_CCL_ANY); }
 
-extern jrx_ccl* ccl_epsilon(jrx_ccl_group* group)
-{
-    return ccl_from_std_ccl(group, JRX_STD_CCL_EPSILON);
-}
+extern jrx_ccl* ccl_epsilon(jrx_ccl_group* group) { return ccl_from_std_ccl(group, JRX_STD_CCL_EPSILON); }
 
-jrx_ccl* ccl_negate(jrx_ccl* ccl)
-{
+jrx_ccl* ccl_negate(jrx_ccl* ccl) {
     assert(! ccl_is_epsilon(ccl));
 
     jrx_ccl* copy = _ccl_create_empty();
@@ -363,8 +314,7 @@ jrx_ccl* ccl_negate(jrx_ccl* ccl)
 
     jrx_char last = 0;
 
-    set_for_each(char_range, ccl->ranges, r)
-    {
+    set_for_each(char_range, ccl->ranges, r) {
         jrx_char_range nr = {last, r.begin};
         set_char_range_insert(copy->ranges, nr);
         last = r.end;
@@ -378,15 +328,13 @@ jrx_ccl* ccl_negate(jrx_ccl* ccl)
     return _ccl_group_add_to(ccl->group, copy);
 }
 
-jrx_ccl* ccl_add_assertions(jrx_ccl* ccl, jrx_assertion assertions)
-{
+jrx_ccl* ccl_add_assertions(jrx_ccl* ccl, jrx_assertion assertions) {
     jrx_ccl* copy = _ccl_copy(ccl);
     copy->assertions |= assertions;
     return _ccl_group_add_to(ccl->group, copy);
 }
 
-jrx_ccl* ccl_join(jrx_ccl* ccl1, jrx_ccl* ccl2)
-{
+jrx_ccl* ccl_join(jrx_ccl* ccl1, jrx_ccl* ccl2) {
     assert(ccl1->group == ccl2->group);
     assert(ccl1->assertions == ccl2->assertions);
 
@@ -402,29 +350,23 @@ jrx_ccl* ccl_join(jrx_ccl* ccl1, jrx_ccl* ccl2)
     return _ccl_group_add_to(ccl1->group, ccl);
 }
 
-int ccl_is_empty(jrx_ccl* ccl)
-{
+int ccl_is_empty(jrx_ccl* ccl) {
     if ( ! ccl )
         return 1;
 
     return (! ccl->ranges) || set_char_range_size(ccl->ranges) == 0;
 }
 
-int ccl_is_epsilon(jrx_ccl* ccl)
-{
+int ccl_is_epsilon(jrx_ccl* ccl) {
     if ( ! ccl )
         return 1;
 
     return ! ccl->ranges;
 }
 
-jrx_ccl* ccl_group_add(jrx_ccl_group* group, jrx_ccl* ccl)
-{
-    return _ccl_group_add_to(group, _ccl_copy(ccl));
-}
+jrx_ccl* ccl_group_add(jrx_ccl_group* group, jrx_ccl* ccl) { return _ccl_group_add_to(group, _ccl_copy(ccl)); }
 
-void ccl_group_disambiguate(jrx_ccl_group* group)
-{
+void ccl_group_disambiguate(jrx_ccl_group* group) {
     int changed;
 
     do {
@@ -460,8 +402,7 @@ void ccl_group_disambiguate(jrx_ccl_group* group)
     } while ( changed );
 }
 
-int ccl_do_intersect(jrx_ccl* ccl1, jrx_ccl* ccl2)
-{
+int ccl_do_intersect(jrx_ccl* ccl1, jrx_ccl* ccl2) {
     if ( ! ccl1->ranges && ! ccl2->ranges )
         return 1;
 
@@ -472,8 +413,7 @@ int ccl_do_intersect(jrx_ccl* ccl1, jrx_ccl* ccl2)
     return is != 0;
 }
 
-void ccl_print(jrx_ccl* ccl, FILE* file)
-{
+void ccl_print(jrx_ccl* ccl, FILE* file) {
     assert(ccl);
 
     fprintf(file, "#%d[", ccl->id);
@@ -481,8 +421,7 @@ void ccl_print(jrx_ccl* ccl, FILE* file)
     if ( ! ccl->ranges )
         fprintf(file, "Epsilon");
     else {
-        set_for_each(char_range, ccl->ranges, r)
-        {
+        set_for_each(char_range, ccl->ranges, r) {
             fprintf(file, "(%u-", r.begin);
             if ( r.end < JRX_CHAR_MAX )
                 fprintf(file, "%u)", r.end);

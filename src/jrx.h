@@ -75,7 +75,7 @@ typedef struct jrx_regmatch_t {
 
 // POSIX options. We use macros here for compatibility with code using
 // ifdef's on them and/or expecting integers.
-#define REG_BASIC 0 // sic! (but not supported anyway)
+#define REG_BASIC 0           // sic! (but not supported anyway)
 #define REG_EXTENDED (1 << 0) ///< "Extended" regular expression syntax (we only one we support).
 #define REG_NOSUB (1 << 1)
 
@@ -86,21 +86,21 @@ typedef struct jrx_regmatch_t {
 #define REG_NOTEOL (1 << 5)
 
 // Non-standard options.
-#define REG_DEBUG (1 << 6) //< Enable debugging output to stderr.
+#define REG_DEBUG (1 << 6)       //< Enable debugging output to stderr.
 #define REG_STD_MATCHER (1 << 7) //< Force usage of the (slower) standard matcher even with REG_NOSUB.
 #define REG_ANCHOR                                                                                                     \
-    (1 << 8) //< Anchor matching at beginning. The effect is that of an implicit '^' at the
-             // beginning.
+    (1 << 8)              //< Anchor matching at beginning. The effect is that of an implicit '^' at the
+                          // beginning.
 #define REG_LAZY (1 << 9) //< Build DFA incrementally.
 
 // Non-standard error codes..
-#define REG_OK 0 //< Everything is fine.
+#define REG_OK 0           //< Everything is fine.
 #define REG_NOTSUPPORTED 1 //< A non-supported feature has been used.
 
 // POSIX error codes.
-#define REG_BADPAT 3 //< A bad pattern was giving for compilation.
+#define REG_BADPAT 3  //< A bad pattern was giving for compilation.
 #define REG_NOMATCH 4 //< No match has been found.
-#define REG_EMEM 5 //< Running out of memory.
+#define REG_EMEM 5    //< Running out of memory.
 
 // We actually do not raise these POSIX errors but define them for
 // completeness.
@@ -138,10 +138,10 @@ extern int jrx_regset_add(jrx_regex_t* preg, const char* pattern, unsigned int l
 extern int jrx_regset_finalize(jrx_regex_t* preg);
 extern int jrx_regexec_partial(const jrx_regex_t* preg, const char* buffer, unsigned int len, jrx_assertion first,
                                jrx_assertion last, jrx_match_state* ms, int find_partial_matches);
-extern int jrx_regexec_partial_std(const jrx_regex_t* preg, const char* buffer, unsigned int len,
-                                jrx_assertion first, jrx_assertion last, jrx_match_state* ms, int find_partial_matches);
-extern int jrx_regexec_partial_min(const jrx_regex_t* preg, const char* buffer, unsigned int len,
-                                jrx_assertion first, jrx_assertion last, jrx_match_state* ms, int find_partial_matches);
+extern int jrx_regexec_partial_std(const jrx_regex_t* preg, const char* buffer, unsigned int len, jrx_assertion first,
+                                   jrx_assertion last, jrx_match_state* ms, int find_partial_matches);
+extern int jrx_regexec_partial_min(const jrx_regex_t* preg, const char* buffer, unsigned int len, jrx_assertion first,
+                                   jrx_assertion last, jrx_match_state* ms, int find_partial_matches);
 
 extern int jrx_reggroups(const jrx_regex_t* preg, jrx_match_state* ms, size_t nmatch, jrx_regmatch_t pmatch[]);
 extern int jrx_num_groups(jrx_regex_t* preg);

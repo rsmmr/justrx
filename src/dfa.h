@@ -15,24 +15,20 @@ typedef struct {
     jrx_jrx_tag_group_id tid; // The tag group we're storing tags in.
 } dfa_state_elem;
 
-static inline int _jrx_cmp_dfa_state_elem(dfa_state_elem a, dfa_state_elem b)
-{
+static inline int _jrx_cmp_dfa_state_elem(dfa_state_elem a, dfa_state_elem b) {
     return a.nid != b.nid ? SET_STD_EQUAL(a.nid, b.nid) : SET_STD_EQUAL(a.tid, b.tid);
 }
 
 DECLARE_SET(dfa_state_elem, dfa_state_elem, uint32_t, _jrx_cmp_dfa_state_elem)
 
-static inline khint_t _jrx_hash_dfa_state_elem(set_dfa_state_elem dstate)
-{
+static inline khint_t _jrx_hash_dfa_state_elem(set_dfa_state_elem dstate) {
     khint_t hash = set_dfa_state_elem_size(&dstate);
-    set_for_each(dfa_state_elem, &dstate, delem) hash =
-        (((hash << 4) ^ (hash >> 28)) + (delem.nid + delem.tid));
+    set_for_each(dfa_state_elem, &dstate, delem) hash = (((hash << 4) ^ (hash >> 28)) + (delem.nid + delem.tid));
 
     return hash;
 }
 
-static inline khint_t _jrx_eq_set_dfa_state_elem(set_dfa_state_elem a, set_dfa_state_elem b)
-{
+static inline khint_t _jrx_eq_set_dfa_state_elem(set_dfa_state_elem a, set_dfa_state_elem b) {
     return set_dfa_state_elem_equal(&a, &b);
 }
 
@@ -92,11 +88,10 @@ typedef struct jrx_dfa {
 } jrx_dfa;
 
 
-extern jrx_dfa* dfa_compile(const char* pattern, int len, jrx_option options, int8_t nmatch,
-                            const char** errmsg);
+extern jrx_dfa* dfa_compile(const char* pattern, int len, jrx_option options, int8_t nmatch, const char** errmsg);
 extern jrx_dfa* dfa_from_nfa(jrx_nfa* nfa);
-extern int dfa_state_compute(jrx_nfa_context* ctx, jrx_dfa* dfa, jrx_dfa_state_id id,
-                             set_dfa_state_elem* dstate, int recurse);
+extern int dfa_state_compute(jrx_nfa_context* ctx, jrx_dfa* dfa, jrx_dfa_state_id id, set_dfa_state_elem* dstate,
+                             int recurse);
 extern jrx_dfa_state* dfa_get_state(jrx_dfa* dfa, jrx_dfa_state_id id);
 extern void dfa_delete(jrx_dfa* dfa);
 extern void dfa_print(jrx_dfa* dfa, FILE* file);

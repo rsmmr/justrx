@@ -1,23 +1,21 @@
 // $Id$
 
 #include "nfa.h"
-#include "jrx-intern.h"
-
-#include <justrx/autogen/re-parse.h>
-#include <justrx/autogen/re-scan.h>
 
 #include <assert.h>
+#include <justrx/autogen/re-parse.h>
+#include <justrx/autogen/re-scan.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "jrx-intern.h"
 
 /** \addtogroup NFA */
 //@{
 
 
-
-static jrx_nfa_state* _nfa_state_create(jrx_nfa_context* ctx)
-{
+static jrx_nfa_state* _nfa_state_create(jrx_nfa_context* ctx) {
     jrx_nfa_state* state = (jrx_nfa_state*)malloc(sizeof(jrx_nfa_state));
     if ( ! state )
         return 0;
@@ -29,10 +27,8 @@ static jrx_nfa_state* _nfa_state_create(jrx_nfa_context* ctx)
 }
 
 // Not exposed. Delete the context instead.
-static void _nfa_state_delete(jrx_nfa_state* state)
-{
-    vec_for_each(nfa_transition, state->trans, trans)
-    {
+static void _nfa_state_delete(jrx_nfa_state* state) {
+    vec_for_each(nfa_transition, state->trans, trans) {
         if ( trans.tags )
             set_tag_delete(trans.tags);
     }
@@ -40,8 +36,7 @@ static void _nfa_state_delete(jrx_nfa_state* state)
     vec_nfa_transition_delete(state->trans);
 
     if ( state->accepts ) {
-        vec_for_each(nfa_accept, state->accepts, acc)
-        {
+        vec_for_each(nfa_accept, state->accepts, acc) {
             if ( acc.tags )
                 set_tag_delete(acc.tags);
         }
@@ -52,9 +47,7 @@ static void _nfa_state_delete(jrx_nfa_state* state)
     free(state);
 }
 
-static void _nfa_state_closure(jrx_nfa_context* ctx, jrx_nfa_state* state,
-                               set_nfa_state_id* closure)
-{
+static void _nfa_state_closure(jrx_nfa_context* ctx, jrx_nfa_state* state, set_nfa_state_id* closure) {
     if ( set_nfa_state_id_contains(closure, state->id) )
         return;
 
@@ -64,9 +57,7 @@ static void _nfa_state_closure(jrx_nfa_context* ctx, jrx_nfa_state* state,
         _nfa_state_closure(ctx, vec_nfa_state_get(ctx->states, trans.succ), closure);
 }
 
-static jrx_nfa_state* _nfa_state_deep_copy(jrx_nfa_context* ctx, jrx_nfa_state* state,
-                                           vec_nfa_state* copies)
-{
+static jrx_nfa_state* _nfa_state_deep_copy(jrx_nfa_context* ctx, jrx_nfa_state* state, vec_nfa_state* copies) {
     jrx_nfa_state* copy = vec_nfa_state_get(copies, state->id);
 
     if ( copy )
@@ -81,30 +72,25 @@ static jrx_nfa_state* _nfa_state_deep_copy(jrx_nfa_context* ctx, jrx_nfa_state* 
 
     copy->accepts = state->accepts ? vec_nfa_accept_copy(state->accepts) : 0;
 
-    vec_for_each(nfa_transition, state->trans, trans)
-    {
+    vec_for_each(nfa_transition, state->trans, trans) {
         jrx_nfa_state* succ = vec_nfa_state_get(ctx->states, trans.succ);
         jrx_nfa_state* nsucc = _nfa_state_deep_copy(ctx, succ, copies);
 
         assert(nsucc);
-        jrx_nfa_transition ntrans = {trans.ccl, nsucc->id,
-                                     trans.tags ? set_tag_copy(trans.tags) : 0};
+        jrx_nfa_transition ntrans = {trans.ccl, nsucc->id, trans.tags ? set_tag_copy(trans.tags) : 0};
         vec_nfa_transition_append(copy->trans, ntrans);
     }
 
     return copy;
 }
 
-static void _nfa_state_add_trans(jrx_nfa_state* state, jrx_nfa_state* succ, set_tag* tags,
-                                 jrx_ccl* ccl)
-{
+static void _nfa_state_add_trans(jrx_nfa_state* state, jrx_nfa_state* succ, set_tag* tags, jrx_ccl* ccl) {
     assert(succ && state && state->trans);
     jrx_nfa_transition ntrans = {ccl->id, succ->id, tags ? set_tag_copy(tags) : 0};
     vec_nfa_transition_append(state->trans, ntrans);
 }
 
-static jrx_nfa* _nfa_deep_copy(jrx_nfa* nfa)
-{
+static jrx_nfa* _nfa_deep_copy(jrx_nfa* nfa) {
     vec_nfa_state* copies = vec_nfa_state_create(0);
 
     jrx_nfa_state* ninitial = _nfa_state_deep_copy(nfa->ctx, nfa->initial, copies);
@@ -118,8 +104,7 @@ static jrx_nfa* _nfa_deep_copy(jrx_nfa* nfa)
     return copy;
 }
 
-jrx_nfa_context* nfa_context_create(jrx_option options, int8_t nmatch)
-{
+jrx_nfa_context* nfa_context_create(jrx_option options, int8_t nmatch) {
     jrx_nfa_context* ctx = (jrx_nfa_context*)malloc(sizeof(jrx_nfa_context));
     ctx->refcnt = 0;
     ctx->options = options;
@@ -132,8 +117,7 @@ jrx_nfa_context* nfa_context_create(jrx_option options, int8_t nmatch)
     return ctx;
 }
 
-void nfa_context_delete(jrx_nfa_context* ctx)
-{
+void nfa_context_delete(jrx_nfa_context* ctx) {
     if ( ! ctx )
         return;
 
@@ -145,8 +129,7 @@ void nfa_context_delete(jrx_nfa_context* ctx)
     free(ctx);
 }
 
-jrx_nfa* nfa_create(jrx_nfa_context* ctx, jrx_nfa_state* initial, jrx_nfa_state* final)
-{
+jrx_nfa* nfa_create(jrx_nfa_context* ctx, jrx_nfa_state* initial, jrx_nfa_state* final) {
     jrx_nfa* nfa = (jrx_nfa*)malloc(sizeof(jrx_nfa));
     nfa->ctx = ctx;
     nfa->initial_tags = 0;
@@ -156,8 +139,7 @@ jrx_nfa* nfa_create(jrx_nfa_context* ctx, jrx_nfa_state* initial, jrx_nfa_state*
     return nfa;
 }
 
-void nfa_delete(jrx_nfa* nfa)
-{
+void nfa_delete(jrx_nfa* nfa) {
     if ( ! nfa )
         return;
 
@@ -170,8 +152,7 @@ void nfa_delete(jrx_nfa* nfa)
     free(nfa);
 }
 
-jrx_nfa* nfa_set_accept(jrx_nfa* nfa, jrx_accept_id accept)
-{
+jrx_nfa* nfa_set_accept(jrx_nfa* nfa, jrx_accept_id accept) {
     assert(nfa->initial && nfa->final);
 
     jrx_nfa_accept acc = {0, accept, 0};
@@ -187,8 +168,7 @@ jrx_nfa* nfa_set_accept(jrx_nfa* nfa, jrx_accept_id accept)
     return nfa;
 }
 
-jrx_nfa* nfa_set_capture(jrx_nfa* nfa, uint8_t group)
-{
+jrx_nfa* nfa_set_capture(jrx_nfa* nfa, uint8_t group) {
     assert(nfa->initial && nfa->final);
     jrx_nfa_context* ctx = nfa->ctx;
 
@@ -216,22 +196,19 @@ jrx_nfa* nfa_set_capture(jrx_nfa* nfa, uint8_t group)
     return nnfa;
 }
 
-jrx_nfa* nfa_empty(jrx_nfa_context* ctx)
-{
+jrx_nfa* nfa_empty(jrx_nfa_context* ctx) {
     jrx_nfa_state* s = _nfa_state_create(ctx);
     jrx_nfa* nfa = nfa_create(ctx, s, s);
     return nfa;
 }
 
-jrx_nfa* nfa_from_ccl(jrx_nfa_context* ctx, jrx_ccl* ccl)
-{
+jrx_nfa* nfa_from_ccl(jrx_nfa_context* ctx, jrx_ccl* ccl) {
     jrx_nfa* nfa1 = nfa_empty(ctx);
     jrx_nfa* nfa2 = nfa_empty(ctx);
     return nfa_concat(nfa1, nfa2, ccl);
 }
 
-jrx_nfa* nfa_concat(jrx_nfa* nfa1, jrx_nfa* nfa2, jrx_ccl* ccl)
-{
+jrx_nfa* nfa_concat(jrx_nfa* nfa1, jrx_nfa* nfa2, jrx_ccl* ccl) {
     assert(nfa1->ctx == nfa2->ctx);
     jrx_nfa_context* ctx = nfa1->ctx;
 
@@ -248,8 +225,7 @@ jrx_nfa* nfa_concat(jrx_nfa* nfa1, jrx_nfa* nfa2, jrx_ccl* ccl)
     return nfa1;
 }
 
-jrx_nfa* nfa_alternative(jrx_nfa* nfa1, jrx_nfa* nfa2)
-{
+jrx_nfa* nfa_alternative(jrx_nfa* nfa1, jrx_nfa* nfa2) {
     assert(nfa1->ctx == nfa2->ctx);
     jrx_nfa_context* ctx = nfa1->ctx;
 
@@ -271,8 +247,7 @@ jrx_nfa* nfa_alternative(jrx_nfa* nfa1, jrx_nfa* nfa2)
     return nfa;
 }
 
-jrx_nfa* nfa_iterate(jrx_nfa* nfa, int min, int max)
-{
+jrx_nfa* nfa_iterate(jrx_nfa* nfa, int min, int max) {
     jrx_nfa_context* ctx = nfa->ctx;
 
     if ( min < 0 )
@@ -286,8 +261,7 @@ jrx_nfa* nfa_iterate(jrx_nfa* nfa, int min, int max)
 
     if ( min == 0 && max < 0 ) {
         // {0,} -> *
-        _nfa_state_add_trans(nfa->final, nfa->initial, /* closure->initial_tags */ 0,
-                             ccl_epsilon(ctx->ccls));
+        _nfa_state_add_trans(nfa->final, nfa->initial, /* closure->initial_tags */ 0, ccl_epsilon(ctx->ccls));
         return nfa_alternative(nfa, nfa_empty(ctx));
     }
 
@@ -303,8 +277,7 @@ jrx_nfa* nfa_iterate(jrx_nfa* nfa, int min, int max)
     if ( max < 0 ) {
         assert(all);
         assert(last);
-        _nfa_state_add_trans(last->final, last->initial, /* closure->initial_tags */ 0,
-                             ccl_epsilon(ctx->ccls));
+        _nfa_state_add_trans(last->final, last->initial, /* closure->initial_tags */ 0, ccl_epsilon(ctx->ccls));
         if ( all != last ) {
             nfa_delete(all);
             all = last;
@@ -323,10 +296,9 @@ jrx_nfa* nfa_iterate(jrx_nfa* nfa, int min, int max)
     return all;
 }
 
-void _nfa_state_follow_epsilons(jrx_nfa_context* ctx, jrx_nfa_state* state,
-                                set_nfa_state_id* closure, vec_nfa_transition* ntrans,
-                                set_tag** tags, vec_nfa_accept** accepts, jrx_assertion assertions)
-{
+void _nfa_state_follow_epsilons(jrx_nfa_context* ctx, jrx_nfa_state* state, set_nfa_state_id* closure,
+                                vec_nfa_transition* ntrans, set_tag** tags, vec_nfa_accept** accepts,
+                                jrx_assertion assertions) {
     if ( ! state )
         return;
 
@@ -336,8 +308,7 @@ void _nfa_state_follow_epsilons(jrx_nfa_context* ctx, jrx_nfa_state* state,
     set_nfa_state_id_insert(closure, state->id);
 
     if ( state->accepts && state->accepts != *accepts ) {
-        vec_for_each(nfa_accept, state->accepts, acc)
-        {
+        vec_for_each(nfa_accept, state->accepts, acc) {
             set_tag* ntags = 0;
 
             if ( acc.tags || *tags ) {
@@ -358,8 +329,7 @@ void _nfa_state_follow_epsilons(jrx_nfa_context* ctx, jrx_nfa_state* state,
         }
     }
 
-    vec_for_each(nfa_transition, state->trans, trans)
-    {
+    vec_for_each(nfa_transition, state->trans, trans) {
         jrx_ccl* ccl = vec_ccl_get(ctx->ccls->ccls, trans.ccl);
 
         if ( ! ccl_is_epsilon(ccl) ) {
@@ -390,8 +360,7 @@ void _nfa_state_follow_epsilons(jrx_nfa_context* ctx, jrx_nfa_state* state,
 
             jrx_nfa_state* succ = vec_nfa_state_get(ctx->states, trans.succ);
 
-            _nfa_state_follow_epsilons(ctx, succ, closure, ntrans, &ntags, accepts,
-                                       assertions | ccl->assertions);
+            _nfa_state_follow_epsilons(ctx, succ, closure, ntrans, &ntags, accepts, assertions | ccl->assertions);
 
             if ( ntags )
                 set_tag_delete(ntags);
@@ -399,22 +368,18 @@ void _nfa_state_follow_epsilons(jrx_nfa_context* ctx, jrx_nfa_state* state,
     }
 }
 
-void nfa_remove_epsilons(jrx_nfa* nfa)
-{
+void nfa_remove_epsilons(jrx_nfa* nfa) {
     jrx_nfa_context* ctx = nfa->ctx;
 
-    vec_for_each(nfa_state, ctx->states, state)
-    {
+    vec_for_each(nfa_state, ctx->states, state) {
         vec_nfa_transition* ntrans = vec_nfa_transition_create(0);
 
-        vec_for_each(nfa_transition, state->trans, trans)
-        {
+        vec_for_each(nfa_transition, state->trans, trans) {
             jrx_ccl* ccl = vec_ccl_get(ctx->ccls->ccls, trans.ccl);
 
             if ( ! ccl_is_epsilon(ccl) ) {
                 // Keep transition.n
-                jrx_nfa_transition t = {trans.ccl, trans.succ,
-                                        trans.tags ? set_tag_copy(trans.tags) : 0};
+                jrx_nfa_transition t = {trans.ccl, trans.succ, trans.tags ? set_tag_copy(trans.tags) : 0};
                 vec_nfa_transition_append(ntrans, t);
             }
 
@@ -426,8 +391,7 @@ void nfa_remove_epsilons(jrx_nfa* nfa)
                 set_tag* tags = trans.tags ? set_tag_copy(trans.tags) : 0;
 
                 jrx_nfa_state* succ = vec_nfa_state_get(ctx->states, trans.succ);
-                _nfa_state_follow_epsilons(ctx, succ, closure, ntrans, &tags, &state->accepts,
-                                           ccl->assertions);
+                _nfa_state_follow_epsilons(ctx, succ, closure, ntrans, &tags, &state->accepts, ccl->assertions);
 
                 set_nfa_state_id_delete(closure);
 
@@ -444,8 +408,7 @@ void nfa_remove_epsilons(jrx_nfa* nfa)
             }
         }
 
-        vec_for_each(nfa_transition, state->trans, t)
-        {
+        vec_for_each(nfa_transition, state->trans, t) {
             if ( t.tags )
                 set_tag_delete(t.tags);
         }
@@ -456,9 +419,7 @@ void nfa_remove_epsilons(jrx_nfa* nfa)
     }
 }
 
-static jrx_nfa* _nfa_compile_pattern(jrx_nfa_context* ctx, const char* pattern, int len,
-                                     const char** errmsg)
-{
+static jrx_nfa* _nfa_compile_pattern(jrx_nfa_context* ctx, const char* pattern, int len, const char** errmsg) {
     yyscan_t scanner;
     jrx_nfa* nfa = 0;
 
@@ -505,8 +466,7 @@ static jrx_nfa* _nfa_compile_pattern(jrx_nfa_context* ctx, const char* pattern, 
     return nfa;
 }
 
-jrx_nfa* nfa_compile_add(jrx_nfa* nfa, const char* pattern, int len, const char** errmsg)
-{
+jrx_nfa* nfa_compile_add(jrx_nfa* nfa, const char* pattern, int len, const char** errmsg) {
 #if 0
     if ( ! (nfa->ctx->options & JRX_OPTION_NO_CAPTURE) ) {
         *errmsg = "cannot capture subgroups with set matching; use OPTION_NO_CAPTURE";
@@ -524,9 +484,7 @@ jrx_nfa* nfa_compile_add(jrx_nfa* nfa, const char* pattern, int len, const char*
     return nfa_alternative(nfa, nnfa);
 }
 
-jrx_nfa* nfa_compile(const char* pattern, int len, jrx_option options, int8_t nmatch,
-                     const char** errmsg)
-{
+jrx_nfa* nfa_compile(const char* pattern, int len, jrx_option options, int8_t nmatch, const char** errmsg) {
     if ( options & JRX_OPTION_NO_CAPTURE )
         nmatch = 0;
 
@@ -534,16 +492,14 @@ jrx_nfa* nfa_compile(const char* pattern, int len, jrx_option options, int8_t nm
     return _nfa_compile_pattern(ctx, pattern, len, errmsg);
 }
 
-static void _set_tag_print(set_tag* tags, FILE* file)
-{
+static void _set_tag_print(set_tag* tags, FILE* file) {
     if ( ! tags ) {
         fputs("none", file);
         return;
     }
 
     int first = 1;
-    set_for_each(tag, tags, tag)
-    {
+    set_for_each(tag, tags, tag) {
         if ( ! first )
             fputs(",", file);
         fprintf(file, "%d@%d", tag.reg, tag.prio);
@@ -551,14 +507,12 @@ static void _set_tag_print(set_tag* tags, FILE* file)
     }
 }
 
-void nfa_state_print(jrx_nfa_context* ctx, jrx_nfa_state* state, FILE* file)
-{
+void nfa_state_print(jrx_nfa_context* ctx, jrx_nfa_state* state, FILE* file) {
     fprintf(file, "state %d\n", state->id);
 
     if ( state->accepts ) {
         fprintf(file, "  accepts with");
-        vec_for_each(nfa_accept, state->accepts, acc)
-        {
+        vec_for_each(nfa_accept, state->accepts, acc) {
             fprintf(file, " %d, tags", acc.aid);
             _set_tag_print(acc.tags, file);
             fprintf(file, ", final assertions %d", acc.assertions);
@@ -567,8 +521,7 @@ void nfa_state_print(jrx_nfa_context* ctx, jrx_nfa_state* state, FILE* file)
         fprintf(file, "\n");
     }
 
-    vec_for_each(nfa_transition, state->trans, trans)
-    {
+    vec_for_each(nfa_transition, state->trans, trans) {
         ccl_print(vec_ccl_get(ctx->ccls->ccls, trans.ccl), file);
         fprintf(file, "   -> %d ", trans.succ);
         fputs("(tags ", file);
@@ -578,8 +531,7 @@ void nfa_state_print(jrx_nfa_context* ctx, jrx_nfa_state* state, FILE* file)
     }
 }
 
-void nfa_print(jrx_nfa* nfa, FILE* file)
-{
+void nfa_print(jrx_nfa* nfa, FILE* file) {
     // We compute a closure to print only relevant states.
     set_nfa_state_id* closure = set_nfa_state_id_create(0);
     _nfa_state_closure(nfa->ctx, nfa->initial, closure);
@@ -592,8 +544,7 @@ void nfa_print(jrx_nfa* nfa, FILE* file)
         fprintf(stderr, "\n");
     }
 
-    set_for_each(nfa_state_id, closure, nid)
-    {
+    set_for_each(nfa_state_id, closure, nid) {
         jrx_nfa_state* state = vec_nfa_state_get(nfa->ctx->states, nid);
         assert(state);
 

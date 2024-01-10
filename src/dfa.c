@@ -1,10 +1,10 @@
 // $Id$
 
 #include "dfa.h"
+
 #include "jrx-intern.h"
 
-static jrx_dfa* _dfa_create()
-{
+static jrx_dfa* _dfa_create() {
     jrx_dfa* dfa = (jrx_dfa*)malloc(sizeof(jrx_dfa));
     if ( ! dfa )
         return 0;
@@ -24,8 +24,7 @@ static jrx_dfa* _dfa_create()
     return dfa;
 }
 
-static jrx_dfa_state* _dfa_state_create()
-{
+static jrx_dfa_state* _dfa_state_create() {
     jrx_dfa_state* dstate = (jrx_dfa_state*)malloc(sizeof(jrx_dfa_state));
     if ( ! dstate )
         return 0;
@@ -35,10 +34,8 @@ static jrx_dfa_state* _dfa_state_create()
     return dstate;
 }
 
-static void _dfa_state_delete(jrx_dfa_state* state)
-{
-    vec_for_each(dfa_transition, state->trans, trans)
-    {
+static void _dfa_state_delete(jrx_dfa_state* state) {
+    vec_for_each(dfa_transition, state->trans, trans) {
         if ( trans.tops )
             vec_tag_op_delete(trans.tops);
     }
@@ -46,8 +43,7 @@ static void _dfa_state_delete(jrx_dfa_state* state)
     vec_dfa_transition_delete(state->trans);
 
     if ( state->accepts ) {
-        vec_for_each(dfa_accept, state->accepts, acc)
-        {
+        vec_for_each(dfa_accept, state->accepts, acc) {
             if ( acc.final_ops )
                 vec_tag_op_delete(acc.final_ops);
 
@@ -61,8 +57,7 @@ static void _dfa_state_delete(jrx_dfa_state* state)
     free(state);
 }
 
-static jrx_dfa_state_id reserve_dfastate_id(jrx_dfa* dfa, set_dfa_state_elem* dstate)
-{
+static jrx_dfa_state_id reserve_dfastate_id(jrx_dfa* dfa, set_dfa_state_elem* dstate) {
     jrx_dfa_state_id id = vec_dfa_state_append(dfa->states, 0);
     vec_dfa_state_elem_append(dfa->state_elems, 0);
 
@@ -90,10 +85,8 @@ typedef struct {
 
 DECLARE_VECTOR(nid_tag_op, _nid_tag_op, uint32_t)
 
-static set_dfa_state_elem* transition_with(jrx_nfa_context* ctx, jrx_dfa* dfa,
-                                           set_dfa_state_elem* dstate, jrx_ccl* ccl,
-                                           vec_tag_op** tops)
-{
+static set_dfa_state_elem* transition_with(jrx_nfa_context* ctx, jrx_dfa* dfa, set_dfa_state_elem* dstate, jrx_ccl* ccl,
+                                           vec_tag_op** tops) {
     set_nfa_state_id* nstates = set_nfa_state_id_create(0);
     vec_nid_tag_op* ntops = vec_nid_tag_op_create(0);
 
@@ -101,12 +94,10 @@ static set_dfa_state_elem* transition_with(jrx_nfa_context* ctx, jrx_dfa* dfa,
 
     // Get all our options with this CCL.
 
-    set_for_each(dfa_state_elem, dstate, delem)
-    {
+    set_for_each(dfa_state_elem, dstate, delem) {
         jrx_nfa_state* nstate = vec_nfa_state_get(ctx->states, delem.nid);
 
-        vec_for_each(nfa_transition, nstate->trans, trans)
-        {
+        vec_for_each(nfa_transition, nstate->trans, trans) {
             jrx_ccl* nccl = vec_ccl_get(ctx->ccls->ccls, trans.ccl);
             if ( ccl_do_intersect(nccl, ccl) ) {
                 set_nfa_state_id_insert(nstates, trans.succ);
@@ -117,8 +108,7 @@ static set_dfa_state_elem* transition_with(jrx_nfa_context* ctx, jrx_dfa* dfa,
                     // Make sure we get at least one entry for this state.
                     assert(set_tag_size(trans.tags));
 
-                    set_for_each(tag, trans.tags, tag)
-                    {
+                    set_for_each(tag, trans.tags, tag) {
                         _nid_tag_op ntop = {trans.succ, delem.tid, tid, tag};
                         vec_nid_tag_op_append(ntops, ntop);
                     }
@@ -138,14 +128,12 @@ static set_dfa_state_elem* transition_with(jrx_nfa_context* ctx, jrx_dfa* dfa,
 
     set_dfa_state_elem* ndstate = set_dfa_state_elem_create(0);
 
-    set_for_each(nfa_state_id, nstates, nid)
-    {
+    set_for_each(nfa_state_id, nstates, nid) {
         // Determine tag set with highest priority for this state.
         int8_t max_tprio = -127;
         jrx_tag_group_id max_tnew = 0;
 
-        vec_for_each(nid_tag_op, ntops, ntop)
-        {
+        vec_for_each(nid_tag_op, ntops, ntop) {
             if ( ntop.nid == nid && ntop.tag.prio >= max_tprio ) {
                 max_tprio = ntop.tag.prio;
                 max_tnew = ntop.tnew;
@@ -153,8 +141,7 @@ static set_dfa_state_elem* transition_with(jrx_nfa_context* ctx, jrx_dfa* dfa,
         }
 
         // Add those entries with the highest priority.
-        vec_for_each(nid_tag_op, ntops, ntop2)
-        {
+        vec_for_each(nid_tag_op, ntops, ntop2) {
             if ( ntop2.nid != nid )
                 continue;
 
@@ -179,9 +166,8 @@ static set_dfa_state_elem* transition_with(jrx_nfa_context* ctx, jrx_dfa* dfa,
 
 static jrx_dfa_state sentinel; // Value is irrelevant.
 
-int dfa_state_compute(jrx_nfa_context* ctx, jrx_dfa* dfa, jrx_dfa_state_id id,
-                      set_dfa_state_elem* dstate, int recurse)
-{
+int dfa_state_compute(jrx_nfa_context* ctx, jrx_dfa* dfa, jrx_dfa_state_id id, set_dfa_state_elem* dstate,
+                      int recurse) {
     if ( vec_dfa_state_get(dfa->states, id) )
         // Already computed (or being worked on at the moment).
         return 1;
@@ -198,8 +184,7 @@ int dfa_state_compute(jrx_nfa_context* ctx, jrx_dfa* dfa, jrx_dfa_state_id id,
     // trying all of them each time.
     vec_dfa_transition* transitions = vec_dfa_transition_create(0);
 
-    vec_for_each(ccl, dfa->ccls->ccls, ccl)
-    {
+    vec_for_each(ccl, dfa->ccls->ccls, ccl) {
         if ( ccl_is_empty(ccl) )
             continue;
 
@@ -261,21 +246,18 @@ int dfa_state_compute(jrx_nfa_context* ctx, jrx_dfa* dfa, jrx_dfa_state_id id,
     // Add accepts.
     vec_dfa_accept* accepts = 0;
 
-    set_for_each(dfa_state_elem, dstate, delem)
-    {
+    set_for_each(dfa_state_elem, dstate, delem) {
         jrx_nfa_state* nstate = vec_nfa_state_get(ctx->states, delem.nid);
 
         if ( ! nstate->accepts )
             continue;
 
-        vec_for_each(nfa_accept, nstate->accepts, acc)
-        {
+        vec_for_each(nfa_accept, nstate->accepts, acc) {
             vec_tag_op* tops = 0;
 
             if ( acc.tags ) {
                 tops = vec_tag_op_create(0);
-                set_for_each(tag, acc.tags, tag)
-                {
+                set_for_each(tag, acc.tags, tag) {
                     jrx_tag_op top = {delem.tid, delem.tid, tag.reg};
                     vec_tag_op_append(tops, top);
                 }
@@ -295,8 +277,7 @@ int dfa_state_compute(jrx_nfa_context* ctx, jrx_dfa* dfa, jrx_dfa_state_id id,
     return 1;
 }
 
-jrx_dfa_state* dfa_get_state(jrx_dfa* dfa, jrx_dfa_state_id id)
-{
+jrx_dfa_state* dfa_get_state(jrx_dfa* dfa, jrx_dfa_state_id id) {
     jrx_dfa_state* state = vec_dfa_state_get(dfa->states, id);
 
     if ( state )
@@ -312,8 +293,7 @@ jrx_dfa_state* dfa_get_state(jrx_dfa* dfa, jrx_dfa_state_id id)
     return state;
 }
 
-jrx_dfa* dfa_from_nfa(jrx_nfa* nfa)
-{
+jrx_dfa* dfa_from_nfa(jrx_nfa* nfa) {
     jrx_dfa* dfa = _dfa_create();
     if ( ! dfa )
         return 0;
@@ -329,10 +309,8 @@ jrx_dfa* dfa_from_nfa(jrx_nfa* nfa)
     // Get us all the CCLs which are used in the NFA.
     dfa->ccls = ccl_group_create();
 
-    vec_for_each(nfa_state, ctx->states, nstate)
-    {
-        vec_for_each(nfa_transition, nstate->trans, trans)
-        {
+    vec_for_each(nfa_state, ctx->states, nstate) {
+        vec_for_each(nfa_transition, nstate->trans, trans) {
             jrx_ccl* ccl = vec_ccl_get(ctx->ccls->ccls, trans.ccl);
             if ( ! (ccl_is_empty(ccl) || ccl_is_epsilon(ccl)) )
                 ccl_group_add(dfa->ccls, ccl);
@@ -352,8 +330,7 @@ jrx_dfa* dfa_from_nfa(jrx_nfa* nfa)
     vec_tag_op* tops = 0;
 
     if ( nfa->initial_tags ) {
-        set_for_each(tag, nfa->initial_tags, tag)
-        {
+        set_for_each(tag, nfa->initial_tags, tag) {
             if ( ! tops )
                 tops = vec_tag_op_create(0);
 
@@ -373,19 +350,16 @@ jrx_dfa* dfa_from_nfa(jrx_nfa* nfa)
     return dfa;
 }
 
-void dfa_delete(jrx_dfa* dfa)
-{
+void dfa_delete(jrx_dfa* dfa) {
     if ( dfa->initial_ops )
         vec_tag_op_delete(dfa->initial_ops);
 
-    vec_for_each(dfa_state, dfa->states, dstate)
-    {
+    vec_for_each(dfa_state, dfa->states, dstate) {
         if ( dstate )
             _dfa_state_delete(dstate);
     }
 
-    vec_for_each(dfa_state_elem, dfa->state_elems, state_elem)
-    {
+    vec_for_each(dfa_state_elem, dfa->state_elems, state_elem) {
         if ( state_elem )
             set_dfa_state_elem_delete(state_elem);
     }
@@ -402,9 +376,7 @@ void dfa_delete(jrx_dfa* dfa)
     free(dfa);
 }
 
-jrx_dfa* dfa_compile(const char* pattern, int len, jrx_option options, int8_t nmatch,
-                     const char** errmsg)
-{
+jrx_dfa* dfa_compile(const char* pattern, int len, jrx_option options, int8_t nmatch, const char** errmsg) {
     jrx_nfa* nfa = nfa_compile(pattern, len, options, nmatch, errmsg);
     if ( ! nfa )
         return 0;
@@ -418,16 +390,14 @@ jrx_dfa* dfa_compile(const char* pattern, int len, jrx_option options, int8_t nm
     return dfa;
 }
 
-static void _vec_tag_op_print(vec_tag_op* tops, FILE* file)
-{
+static void _vec_tag_op_print(vec_tag_op* tops, FILE* file) {
     if ( ! tops ) {
         fputs("none", file);
         return;
     }
 
     int first = 1;
-    vec_for_each(tag_op, tops, top)
-    {
+    vec_for_each(tag_op, tops, top) {
         if ( ! first )
             fputs(", ", file);
         fprintf(file, "old=%d/new=%d/tag=%d", top.told, top.tnew, top.tag);
@@ -435,8 +405,7 @@ static void _vec_tag_op_print(vec_tag_op* tops, FILE* file)
     }
 }
 
-static void _dfa_state_print(jrx_dfa* dfa, jrx_dfa_state* dstate, FILE* file)
-{
+static void _dfa_state_print(jrx_dfa* dfa, jrx_dfa_state* dstate, FILE* file) {
     if ( ! dstate ) {
         fputs("(not computed)", file);
         return;
@@ -444,10 +413,8 @@ static void _dfa_state_print(jrx_dfa* dfa, jrx_dfa_state* dstate, FILE* file)
 
     if ( dstate->accepts ) {
         fputs(" accepts with", file);
-        vec_for_each(dfa_accept, dstate->accepts, acc)
-        {
-            fprintf(file, " (%d, t%d, final assertions %d, final ops", acc.aid, acc.tid,
-                    acc.final_assertions);
+        vec_for_each(dfa_accept, dstate->accepts, acc) {
+            fprintf(file, " (%d, t%d, final assertions %d, final ops", acc.aid, acc.tid, acc.final_assertions);
             _vec_tag_op_print(acc.final_ops, file);
             fprintf(stderr, ")\n");
         }
@@ -455,8 +422,7 @@ static void _dfa_state_print(jrx_dfa* dfa, jrx_dfa_state* dstate, FILE* file)
         fputs("\n", file);
     }
 
-    vec_for_each(dfa_transition, dstate->trans, trans)
-    {
+    vec_for_each(dfa_transition, dstate->trans, trans) {
         fputs(" ", file);
         jrx_ccl* ccl = vec_ccl_get(dfa->ccls->ccls, trans.ccl);
         ccl_print(ccl, file);
@@ -469,8 +435,7 @@ static void _dfa_state_print(jrx_dfa* dfa, jrx_dfa_state* dstate, FILE* file)
     }
 }
 
-void dfa_print(jrx_dfa* dfa, FILE* file)
-{
+void dfa_print(jrx_dfa* dfa, FILE* file) {
     fprintf(file, "== DFA with %d states\n", vec_dfa_state_size(dfa->states));
 
     fprintf(file, "options %d\n", dfa->options);
@@ -481,8 +446,7 @@ void dfa_print(jrx_dfa* dfa, FILE* file)
     _vec_tag_op_print(dfa->initial_ops, file);
     fprintf(file, "\n");
 
-    vec_for_each(dfa_state, dfa->states, dstate)
-    {
+    vec_for_each(dfa_state, dfa->states, dstate) {
         fprintf(file, "state %d\n", __jdstate);
         _dfa_state_print(dfa, dstate, file);
 
@@ -508,8 +472,7 @@ void dfa_print(jrx_dfa* dfa, FILE* file)
 
         set_dfa_state_elem dstate = kh_key(dfa->hstates, k);
 
-        set_for_each(dfa_state_elem, &dstate, delem)
-            fprintf(file, "(#%d, t%d) ", delem.nid, delem.tid);
+        set_for_each(dfa_state_elem, &dstate, delem) fprintf(file, "(#%d, t%d) ", delem.nid, delem.tid);
 
         fputs(")", file);
 

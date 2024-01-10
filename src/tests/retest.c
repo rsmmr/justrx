@@ -1,21 +1,18 @@
 // $Id$
 
 #include <ctype.h>
+#include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <regex.h>
-
-static void print_error(int rc, regex_t* re, const char* prefix)
-{
+static void print_error(int rc, regex_t* re, const char* prefix) {
     char buffer[128];
     regerror(rc, re, buffer, sizeof(buffer));
     printf("%s, %s\n", prefix, buffer);
 }
 
-static void do_match(char** argv, int argc, int opt, int options, uint8_t* data)
-{
+static void do_match(char** argv, int argc, int opt, int options, uint8_t* data) {
     const int max_captures = 20;
 
     int i;
@@ -58,8 +55,7 @@ static void do_match(char** argv, int argc, int opt, int options, uint8_t* data)
     regfree(&re);
 }
 
-char* readInput()
-{
+char* readInput() {
     const int chunk = 5;
     char* buffer = 0;
     int i = 0;
@@ -88,8 +84,7 @@ char* readInput()
 }
 
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     int opt = 1;
     int debug = 0;
     int lazy = 0;

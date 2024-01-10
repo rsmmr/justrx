@@ -26,8 +26,7 @@ typedef struct {
 /// A set of ~~nfa_state_id.
 DECLARE_SET(nfa_state_id, jrx_nfa_state_id, jrx_nfa_state_id, SET_STD_EQUAL)
 
-static inline int _jrx_cmp_tag(jrx_tag t1, jrx_tag t2)
-{
+static inline int _jrx_cmp_tag(jrx_tag t1, jrx_tag t2) {
     return t1.reg != t2.reg ? SET_STD_EQUAL(t1.reg, t2.reg) : SET_STD_EQUAL(t1.prio, t2.prio);
 }
 
@@ -134,8 +133,7 @@ extern jrx_nfa* nfa_iterate(jrx_nfa* nfa, int min, int max);
 extern void nfa_remove_epsilons(jrx_nfa* nfa);
 
 // Compile a single pattern.
-extern jrx_nfa* nfa_compile(const char* pattern, int len, jrx_option options, int8_t nmatch,
-                            const char** errmsg);
+extern jrx_nfa* nfa_compile(const char* pattern, int len, jrx_option options, int8_t nmatch, const char** errmsg);
 
 // Add another pattern alternative to an existing NFA.
 extern jrx_nfa* nfa_compile_add(jrx_nfa* nfa, const char* pattern, int len, const char** errmsg);

@@ -19,13 +19,9 @@ extern jrx_ccl* local_ccl_word(jrx_ccl_group* group);
 extern jrx_ccl* local_ccl_digit(jrx_ccl_group* group);
 extern jrx_ccl* local_ccl_blank(jrx_ccl_group* group);
 
-static inline int _isword(jrx_char cp)
-{
-    return isalnum(cp) || cp == '_';
-}
+static inline int _isword(jrx_char cp) { return isalnum(cp) || cp == '_'; }
 
-static inline int local_word_boundary(jrx_char* prev, jrx_char current)
-{
+static inline int local_word_boundary(jrx_char* prev, jrx_char current) {
     return _isword(current) ? (prev ? ! _isword(*prev) : 1) : 0;
 }
 

@@ -30,8 +30,7 @@ typedef struct {
     vec_std_ccl* std_ccls; // Cache for standard CCLs once computed.
 } jrx_ccl_group;
 
-static inline int _jrx_cmp_char_ranges(jrx_char_range r1, jrx_char_range r2)
-{
+static inline int _jrx_cmp_char_ranges(jrx_char_range r1, jrx_char_range r2) {
     return r1.begin != r2.begin ? SET_STD_EQUAL(r1.begin, r2.begin) : SET_STD_EQUAL(r1.end, r2.end);
 }
 
