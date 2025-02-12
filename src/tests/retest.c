@@ -1,61 +1,173 @@
-// $Id$
-
+#include <assert.h>
 #include <ctype.h>
 #include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
+#include "dfa.h"
+#include "nfa.h"
+
+static const int MAX_CAPTURES = 20;
+
+static void usage() {
+    fprintf(stderr, "usage: echo 'data' | retest [-adli] [-t std|min] <patterns>\n");
+    exit(1);
+}
 
 static void print_error(int rc, regex_t* re, const char* prefix) {
     char buffer[128];
     regerror(rc, re, buffer, sizeof(buffer));
-    printf("%s, %s\n", prefix, buffer);
+    fprintf(stderr, "%s, %s\n\n", prefix, buffer);
 }
 
-static void do_match(char** argv, int argc, int opt, int options, uint8_t* data) {
-    const int max_captures = 20;
+static void print_groups(regmatch_t* pmatch) {
+    fputc('\n', stderr);
 
-    int i;
-    int rc;
-    regex_t re;
-    regmatch_t pmatch[max_captures];
+    for ( int i = 0; i < MAX_CAPTURES; i++ ) {
+        if ( pmatch[i].rm_so != -1 )
+            fprintf(stderr, "  capture group #%d: (%d,%d)\n", i, pmatch[i].rm_so, pmatch[i].rm_eo);
+    }
 
-    if ( (argc - opt) == 1 )
-        rc = regcomp(&re, argv[opt], REG_EXTENDED | options);
-    else {
-        jrx_regset_init(&re, -1, REG_EXTENDED | options);
-        for ( i = opt; i < argc; i++ ) {
-            rc = jrx_regset_add(&re, argv[i], strlen(argv[i]));
-            if ( rc != 0 )
-                break;
+    fputc('\n', stderr);
+}
+
+typedef struct {
+    int length;
+    int cflags;
+    jrx_accept_id id;
+} Flags;
+
+static Flags parse_flags(const char* expr) {
+    Flags flags = {-1, 0, 0};
+
+    const char* p = expr;
+    while ( (p = strstr(p, "{#")) ) {
+        char* q = strchr(p, '}');
+        if ( ! q ) {
+            fprintf(stderr, "missing '}'\n");
+            exit(1);
         }
 
-        rc = jrx_regset_finalize(&re);
-    }
+        if ( flags.length < 0 )
+            flags.length = p - expr;
 
-    if ( rc != 0 ) {
-        print_error(rc, &re, "compile error");
-        return;
-    }
+        p += 2;
 
-    rc = regexec(&re, (const char*)data, max_captures, pmatch, 0);
+        if ( isdigit(*p) )
+            flags.id = atoi(p);
+        else {
+            fprintf(stderr, "invalid flags\n");
+            exit(1);
+        }
 
-    if ( rc != 0 ) {
-        print_error(rc, &re, "pattern not found");
-        return;
-    }
+        p = q + 1;
+    };
 
-    printf("match found!\n");
+    if ( flags.length < 0 )
+        flags.length = strlen(expr);
 
-    for ( i = 0; i < max_captures; i++ ) {
-        if ( pmatch[i].rm_so != -1 )
-            printf("  capture group #%d: (%d,%d)\n", i, pmatch[i].rm_so, pmatch[i].rm_eo);
-    }
-
-    regfree(&re);
+    return flags;
 }
 
-char* readInput() {
+// Uses standard POSIX API to match against a single regular expression.
+// Removes, but otherwise ignores, any inline flags. Returns true if match is
+// found, false if not.
+static int match_single(const char* regexp, int options, const char* data) {
+    fprintf(stderr, "--- Using single pattern API\n\n");
+
+    Flags flags = parse_flags(regexp);
+
+    char buffer[flags.length + 1];
+    strncpy(buffer, regexp, flags.length);
+    buffer[flags.length] = '\0';
+
+    regex_t re;
+    int rc = regcomp(&re, buffer, REG_EXTENDED | options | flags.cflags);
+    if ( rc != 0 ) {
+        print_error(rc, &re, "compile error");
+        return 0;
+    }
+
+    regmatch_t pmatch[MAX_CAPTURES];
+    rc = regexec(&re, data, MAX_CAPTURES, pmatch, 0);
+    if ( rc != 0 ) {
+        print_error(rc, &re, "pattern not found");
+        regfree(&re);
+        return 0;
+    }
+
+    fprintf(stderr, "match found!\n");
+    print_groups(pmatch);
+
+    regfree(&re);
+    return 1;
+}
+
+// Uses group matching API. Applies any inline flags. Returns true if match is
+// found, false if not. Sets id iff match is found.
+static int match_group(char** regexps, int num_regexps, int options, const char* data, jrx_accept_id* id) {
+    fprintf(stderr, "--- Using group matching API\n");
+
+    regex_t re;
+    jrx_regset_init(&re, -1, REG_EXTENDED | options);
+
+    for ( int i = 0; i < num_regexps; i++ ) {
+        Flags flags = parse_flags(regexps[i]);
+        int rc = jrx_regset_add2(&re, regexps[i], flags.length, flags.cflags, flags.id);
+        if ( rc != 0 ) {
+            print_error(rc, &re, "parse error");
+            regfree(&re);
+            return 0;
+        }
+    }
+
+    int rc = jrx_regset_finalize(&re);
+    if ( rc != 0 ) {
+        print_error(rc, &re, "compile error");
+        return 0;
+    }
+
+    regmatch_t pmatch[MAX_CAPTURES];
+    rc = jrx_regexec2(&re, data, MAX_CAPTURES, pmatch, 0, id);
+    if ( rc != 0 ) {
+        print_error(rc, &re, "pattern not found");
+        regfree(&re);
+        return 0;
+    }
+
+    if ( id )
+        fprintf(stderr, "match found! (id %d)\n", *id);
+    else
+        fprintf(stderr, "match found!\n");
+
+    print_groups(pmatch);
+
+    regfree(&re);
+    return 1;
+}
+
+
+// Branches into either single or group matching, depending on the number of
+// patterns we have. Returns true if match is found, false if not. Sets `id`
+// iff match is found. In group mode, sets it to the id of the matching group.
+// In single mode, sets it to 1.
+int match(char** regexps, int num_regexps, int opt, int options, const char* data, jrx_accept_id* id) {
+    assert(num_regexps > 0);
+
+    if ( num_regexps == 1 ) {
+        int rc = match_single(regexps[0], options, data);
+        if ( rc && id )
+            *id = 1;
+
+        return rc;
+    }
+    else
+        return match_group(regexps, num_regexps, options, data, id);
+}
+
+char* read_input() {
     const int chunk = 5;
     char* buffer = 0;
     int i = 0;
@@ -83,60 +195,95 @@ char* readInput() {
     return buffer;
 }
 
+typedef enum { TEST_DEFAULT, TEST_STD, TEST_MIN } TestMode;
 
 int main(int argc, char** argv) {
     int opt = 1;
-    int debug = 0;
-    int lazy = 0;
+    int cflags = 0;
+    TestMode test_mode = TEST_DEFAULT;
 
     int i;
-    uint8_t* d;
+    const char* d;
 
-    while ( argc > opt ) {
-        if ( strcmp(argv[opt], "-a") == 0 )
-            debug = REG_ANCHOR;
+    // Parse command line options with getopt().
+    char c;
+    while ( (c = getopt(argc, argv, "adlt:")) != -1 ) {
+        switch ( c ) {
+            case 'a': cflags |= REG_ANCHOR; break;
+            case 'd': cflags |= REG_DEBUG; break;
+            case 'l': cflags |= REG_LAZY; break;
 
-        else if ( strcmp(argv[opt], "-d") == 0 )
-            debug = REG_DEBUG;
+            case 't': {
+                if ( strcmp(optarg, "std") == 0 )
+                    test_mode = TEST_STD;
+                else if ( strcmp(optarg, "min") == 0 )
+                    test_mode = TEST_MIN;
+                else {
+                    fprintf(stderr, "invalid test mode: %s\n", optarg);
+                    return 1;
+                }
+                break;
+            }
 
-        else if ( strcmp(argv[opt], "-l") == 0 )
-            lazy = REG_LAZY;
-
-        else
-            break;
-
-        ++opt;
+            case '?':
+            default: usage();
+        }
     }
 
-    if ( (argc - opt) < 1 ) {
-        fprintf(stderr, "usage: echo 'data' | retest [-a] [-d] [-l] <patterns>\n");
-        return 1;
-    }
+    argc -= optind;
+    argv += optind;
 
-    uint8_t* data = (uint8_t*)readInput();
+    if ( argc < 1 )
+        usage();
 
-    fprintf(stderr, "=== Pattern: %s\n", argv[opt]);
+    char** regexps = argv;
+    int num_regexps = argc;
+    const char* data = (const char*)read_input();
 
-    for ( i = opt + 1; i < argc; i++ )
-        fprintf(stderr, "             %s\n", argv[i]);
+    fprintf(stderr, "=== Pattern: %s\n", regexps[0]);
+
+    for ( int i = 1; i < num_regexps; i++ )
+        fprintf(stderr, "             %s\n", regexps[i]);
 
     fputs("=== Data   : ", stderr);
+
     for ( d = data; *d; d++ ) {
         if ( isprint(*d) )
             fputc(*d, stderr);
         else
             fprintf(stderr, "\\x%02x", *d);
     }
+
     fputs("\n", stderr);
 
-    fprintf(stderr, "\n=== Standard matcher with subgroups\n");
-    do_match(argv, argc, opt, debug | lazy, data);
+    switch ( test_mode ) {
+        case TEST_DEFAULT: {
+            jrx_accept_id id = 0;
+            fprintf(stderr, "\n=== Standard matcher with subgroups\n");
+            match(regexps, num_regexps, opt, cflags, data, &id);
 
-    fprintf(stderr, "\n=== Standard matcher without subgroups\n");
-    do_match(argv, argc, opt, debug | lazy | REG_NOSUB | REG_STD_MATCHER, data);
+            id = 0;
+            fprintf(stderr, "=== Minimal matcher\n");
+            match(regexps, num_regexps, opt, cflags | REG_NOSUB, data, &id);
+            return 0;
+        }
 
-    fprintf(stderr, "\n=== Minimal matcher\n");
-    do_match(argv, argc, opt, debug | lazy | REG_NOSUB, data);
+        case TEST_STD: {
+            fprintf(stderr, "\n=== Standard matcher with subgroups\n");
+            jrx_accept_id id = 0;
+            if ( match(regexps, num_regexps, opt, cflags, data, &id) )
+                exit(id);
+            else
+                exit(0);
+        }
 
-    exit(0);
+        case TEST_MIN: {
+            fprintf(stderr, "\n=== Minimal matcher\n");
+            jrx_accept_id id = 0;
+            if ( match(regexps, num_regexps, opt, cflags | REG_NOSUB, data, &id) )
+                exit(id);
+            else
+                exit(0);
+        }
+    }
 }

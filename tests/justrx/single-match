@@ -1,0 +1,7 @@
+# @TEST-DOC: Testing matching a single expression with retest.
+#
+# @TEST-EXEC: printf abc | retest -t std 'abc'; test $? -eq 1
+# @TEST-EXEC: printf xxx | retest -t std 'abc'; test $? -eq 0
+#
+# @TEST-EXEC: printf abc | retest -t min 'abc'; test $? -eq 1
+# @TEST-EXEC: printf xxx | retest -t min 'abc'; test $? -eq 0
