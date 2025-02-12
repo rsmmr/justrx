@@ -55,7 +55,9 @@ static Flags parse_flags(const char* expr) {
 
         p += 2;
 
-        if ( isdigit(*p) )
+        if ( *p == 'i' )
+            flags.cflags = REG_ICASE;
+        else if ( isdigit(*p) )
             flags.id = atoi(p);
         else {
             fprintf(stderr, "invalid flags\n");
@@ -207,11 +209,12 @@ int main(int argc, char** argv) {
 
     // Parse command line options with getopt().
     char c;
-    while ( (c = getopt(argc, argv, "adlt:")) != -1 ) {
+    while ( (c = getopt(argc, argv, "adlit:")) != -1 ) {
         switch ( c ) {
             case 'a': cflags |= REG_ANCHOR; break;
             case 'd': cflags |= REG_DEBUG; break;
             case 'l': cflags |= REG_LAZY; break;
+            case 'i': cflags |= REG_ICASE; break;
 
             case 't': {
                 if ( strcmp(optarg, "std") == 0 )

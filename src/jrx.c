@@ -10,9 +10,6 @@ static jrx_option _options(jrx_regex_t* preg) {
     if ( ! (cflags & REG_EXTENDED) )
         preg->errmsg = "REG_BASIC syntax is not supported";
 
-    if ( cflags & REG_ICASE )
-        preg->errmsg = "REG_ICASE not supported at this time";
-
     if ( cflags & REG_NEWLINE )
         preg->errmsg = "REG_NEWLINE not supported at this time";
 
@@ -37,6 +34,9 @@ static jrx_option _options(jrx_regex_t* preg) {
 
     if ( cflags & REG_LAZY )
         options |= JRX_OPTION_LAZY;
+
+    if ( cflags & REG_ICASE )
+        options |= JRX_OPTION_CASE_INSENSITIVE;
 
     return options;
 }
@@ -178,8 +178,8 @@ int jrx_regset_add(jrx_regex_t* preg, const char* pattern, unsigned int len) {
 }
 
 int jrx_regset_add2(jrx_regex_t* preg, const char* pattern, unsigned int len, int cflags, jrx_accept_id id) {
-    if ( cflags )
-        // No per-pattern flags are supported currently.
+    if ( cflags & ~REG_ICASE )
+        // No other per-pattern flags are supported here.
         return REG_NOTSUPPORTED;
 
     jrx_option options = _options(preg);
@@ -195,6 +195,9 @@ int jrx_regset_add2(jrx_regex_t* preg, const char* pattern, unsigned int len, in
     jrx_nfa* nfa = nfa_compile(ctx, pattern, id, len, &preg->errmsg);
     if ( ! nfa || preg->errmsg )
         goto error;
+
+    if ( cflags & REG_ICASE )
+        nfa_make_case_insensitive(nfa);
 
     if ( ! preg->nfa )
         preg->nfa = nfa;

@@ -53,7 +53,6 @@ typedef struct {
     int refcnt;               // Reference counter for memory management.
 } jrx_nfa_context;
 
-
 /// A transition between two NFA states.
 typedef struct {
     jrx_ccl_id ccl;        // CCL for transition.
@@ -131,6 +130,7 @@ extern jrx_nfa* nfa_alternative(jrx_nfa* nfa1, jrx_nfa* nfa2);
 extern jrx_nfa* nfa_iterate(jrx_nfa* nfa, int min, int max);
 
 extern void nfa_remove_epsilons(jrx_nfa* nfa);
+extern void nfa_make_case_insensitive(jrx_nfa* nfa);
 
 // Compile a single pattern.
 extern jrx_nfa* nfa_compile(jrx_nfa_context* ctx, const char* pattern, jrx_accept_id id, int len, const char** errmsg);

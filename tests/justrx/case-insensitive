@@ -1,0 +1,50 @@
+# @TEST-DOC: Testing matching expressions case-insensitively.
+#
+# === Standard matcher
+#
+# @TEST-EXEC: printf aAa | retest -t std AaA; test $? -eq 0
+# @TEST-EXEC: printf aAa | retest -i -t std; test $? -eq 1
+# @TEST-EXEC: printf XxX | retest -t std -i AaA; test $? -eq 0
+#
+# @TEST-EXEC: printf AaA | retest -t std xXx aAa yYy; test $? -eq 0
+# @TEST-EXEC: printf AaA | retest -t std xXx aAa{#i} yYy; test $? -eq 2
+# @TEST-EXEC: printf AaA | retest -t std xXx aAa{#i}{#100} yYy; test $? -eq 100
+# @TEST-EXEC: printf AaA | retest -t std xXx aAa{#i} yYy; test $? -eq 2
+#
+# @TEST-EXEC: printf AaA | retest -i -t std xXx aAa yYy; test $? -eq 2
+#
+# @TEST-EXEC: printf A | retest -i -t std '[[:lower:]]'; test $? -eq 1
+# @TEST-EXEC: printf a | retest -i -t std '[[:lower:]]'; test $? -eq 1
+# @TEST-EXEC: printf A | retest -i -t std '[[:upper:]]'; test $? -eq 1
+# @TEST-EXEC: printf a | retest -i -t std '[[:upper:]]'; test $? -eq 1
+#
+# @TEST-EXEC: printf a | retest -t std '[!-Z]'; test $? -eq 0
+# @TEST-EXEC: printf A | retest -t std '[!-Z]'; test $? -eq 1
+# @TEST-EXEC: printf a | retest -i -t std '[!-Z]'; test $? -eq 1
+# @TEST-EXEC: printf A | retest -i -t std '[!-Z]'; test $? -eq 1
+# @TEST-EXEC: printf '+' | retest -t std '[!-Z]'; test $? -eq 1
+# @TEST-EXEC: printf '+' | retest -i -t std '[!-Z]'; test $? -eq 1
+#
+#
+# === Minimal matcher
+#
+# @TEST-EXEC: printf aAa | retest -t min AaA; test $? -eq 0
+# @TEST-EXEC: printf aAa | retest -i -t min; test $? -eq 1
+# @TEST-EXEC: printf XxX | retest -t min -i AaA; test $? -eq 0
+#
+# @TEST-EXEC: printf AaA | retest -t min xXx aAa yYy; test $? -eq 0
+# @TEST-EXEC: printf AaA | retest -t min xXx aAa{#i} yYy; test $? -eq 2
+# @TEST-EXEC: printf AaA | retest -t min xXx aAa{#i}{#100} yYy; test $? -eq 100
+# @TEST-EXEC: printf AaA | retest -t min xXx aAa{#i} yYy; test $? -eq 2
+#
+# @TEST-EXEC: printf AaA | retest -i -t min xXx aAa yYy; test $? -eq 2
+#
+# @TEST-EXEC: printf A | retest -i -t min '[[:lower:]]'; test $? -eq 1
+# @TEST-EXEC: printf a | retest -i -t min '[[:lower:]]'; test $? -eq 1
+# @TEST-EXEC: printf A | retest -i -t min '[[:upper:]]'; test $? -eq 1
+# @TEST-EXEC: printf a | retest -i -t min '[[:upper:]]'; test $? -eq 1
+#
+# @TEST-EXEC: printf a | retest -t min '[!-Z]'; test $? -eq 0
+# @TEST-EXEC: printf A | retest -t min '[!-Z]'; test $? -eq 1
+# @TEST-EXEC: printf a | retest -i -t min '[!-Z]'; test $? -eq 1
+# @TEST-EXEC: printf A | retest -i -t min '[!-Z]'; test $? -eq 1

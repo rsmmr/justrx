@@ -423,6 +423,27 @@ void nfa_remove_epsilons(jrx_nfa* nfa) {
     }
 }
 
+void nfa_make_case_insensitive(jrx_nfa* nfa) {
+    set_nfa_state_id* closure = set_nfa_state_id_create(0);
+    _nfa_state_closure(nfa->ctx, nfa->initial, closure);
+
+    set_for_each(nfa_state_id, closure, nid) {
+        jrx_nfa_state* state = vec_nfa_state_get(nfa->ctx->states, nid);
+        assert(state);
+
+        for ( size_t idx = 0; idx < vec_nfa_transition_size(state->trans); ++idx ) {
+            jrx_nfa_transition trans = vec_nfa_transition_get(state->trans, idx);
+            jrx_ccl* ccl = vec_ccl_get(nfa->ctx->ccls->ccls, trans.ccl);
+            jrx_ccl* nccl = ccl_make_case_insensitive(ccl);
+            trans.ccl = nccl->id;
+            vec_nfa_transition_set(state->trans, idx, trans);
+        }
+    }
+
+    set_nfa_state_id_delete(closure);
+    return;
+}
+
 jrx_nfa* nfa_compile(jrx_nfa_context* ctx, const char* pattern, jrx_accept_id id, int len, const char** errmsg) {
     yyscan_t scanner;
     jrx_nfa* nfa = 0;
@@ -464,6 +485,9 @@ jrx_nfa* nfa_compile(jrx_nfa_context* ctx, const char* pattern, jrx_accept_id id
 
     // We take the next available accept ID if we don't have one provided.
     nfa_set_accept(nfa, id);
+
+    if ( ctx->options & JRX_OPTION_CASE_INSENSITIVE )
+        nfa_make_case_insensitive(nfa);
 
     nfa = nfa_set_capture(nfa, 0);
     if ( ctx->options & JRX_OPTION_DEBUG )
