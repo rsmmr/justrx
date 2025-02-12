@@ -438,8 +438,6 @@ jrx_nfa* nfa_compile(jrx_nfa_context* ctx, const char* pattern, jrx_accept_id id
     int i = RE_parse(scanner, ctx, &nfa);
     RE_lex_destroy(scanner);
 
-    assert(nfa);
-
     if ( i == 1 && ! internal_errmsg )
         internal_errmsg = "parser error";
 

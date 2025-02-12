@@ -283,6 +283,11 @@ int jrx_reggroups(const jrx_regex_t* preg, jrx_match_state* ms, size_t nmatch, j
 }
 
 int jrx_regexec(const jrx_regex_t* preg, const char* string, size_t nmatch, jrx_regmatch_t pmatch[], int eflags) {
+    return jrx_regexec2(preg, string, nmatch, pmatch, eflags, 0);
+}
+
+int jrx_regexec2(const jrx_regex_t* preg, const char* string, size_t nmatch, jrx_regmatch_t pmatch[], int eflags,
+                 jrx_accept_id* accept_id) {
     if ( eflags & (REG_NOTEOL | REG_NOTBOL) )
         return REG_NOTSUPPORTED;
 
@@ -290,6 +295,9 @@ int jrx_regexec(const jrx_regex_t* preg, const char* string, size_t nmatch, jrx_
         _clear_pmatch(nmatch, pmatch, 1);
         return 0;
     }
+
+    if ( accept_id )
+        *accept_id = 0;
 
     jrx_match_state ms;
     jrx_match_state_init(preg, 0, &ms);
@@ -303,6 +311,9 @@ int jrx_regexec(const jrx_regex_t* preg, const char* string, size_t nmatch, jrx_
         jrx_match_state_done(&ms);
         return REG_NOMATCH;
     }
+
+    if ( accept_id )
+        *accept_id = rc;
 
     rc = jrx_reggroups(preg, &ms, nmatch, pmatch);
     jrx_match_state_done(&ms);

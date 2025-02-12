@@ -129,6 +129,8 @@ typedef struct jrx_regmatch_t {
 extern int jrx_regcomp(jrx_regex_t* preg, const char* pattern, int cflags);
 extern size_t jrx_regerror(int errcode, const jrx_regex_t* preg, char* errbuf, size_t errbuf_size);
 extern int jrx_regexec(const jrx_regex_t* preg, const char* string, size_t nmatch, jrx_regmatch_t pmatch[], int eflags);
+extern int jrx_regexec2(const jrx_regex_t* preg, const char* string, size_t nmatch, jrx_regmatch_t pmatch[], int eflags,
+                        jrx_accept_id* accept_id);
 extern void jrx_regfree(jrx_regex_t* preg);
 
 // These are non-POSIX extensions.
