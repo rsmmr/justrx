@@ -135,6 +135,7 @@ extern void jrx_regfree(jrx_regex_t* preg);
 extern void jrx_regset_init(jrx_regex_t* preg, int nmatch, int cflags);
 extern void jrx_regset_done(jrx_regex_t* preg, int cflags);
 extern int jrx_regset_add(jrx_regex_t* preg, const char* pattern, unsigned int len);
+extern int jrx_regset_add2(jrx_regex_t* preg, const char* pattern, unsigned int len, int cflags, jrx_accept_id id);
 extern int jrx_regset_finalize(jrx_regex_t* preg);
 extern int jrx_regexec_partial(const jrx_regex_t* preg, const char* buffer, unsigned int len, jrx_assertion first,
                                jrx_assertion last, jrx_match_state* ms, int find_partial_matches);

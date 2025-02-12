@@ -29,7 +29,7 @@ extern int RE_lex(void* yylval_param, void* yyscanner);
 %parse-param{jrx_nfa_context* nfactx}
 %parse-param{jrx_nfa** nfa}
 
-%token TOK_ASSERTION TOK_CODEPOINT TOK_NEGATE_CCL TOK_COUNT TOK_DYNCCL TOK_ACCEPT_ID
+%token TOK_ASSERTION TOK_CODEPOINT TOK_NEGATE_CCL TOK_COUNT TOK_DYNCCL
 
 %union {
     jrx_char cp;
@@ -44,38 +44,18 @@ extern int RE_lex(void* yylval_param, void* yyscanner);
 %type <cp> TOK_CODEPOINT
 %type <assertion> TOK_ASSERTION assertions
 %type <dynccl> TOK_DYNCCL
-%type <count> TOK_COUNT TOK_ACCEPT_ID opt_count opt_accept_id
+%type <count> TOK_COUNT opt_count
 
 %type <ccl> ccl ccl_elem
 %type <nfa> complete_regexp regexp alternatives singletons singleton
 
 %%
 
-complete_regexp : regexp opt_accept_id
-                  {
-                  *nfa = $1;
-                  *nfa = nfa_set_capture(*nfa, 0);
-
-                  /* Add a .* if requested. */
-                  if ( nfactx->options & JRX_OPTION_DONT_ANCHOR ) {
-                      jrx_nfa* any = nfa_from_ccl(nfactx, ccl_any(nfactx->ccls));
-                      *nfa = nfa_concat(nfa_iterate(any, 0, -1), *nfa, 0);
-                      }
-
-                  if ( $2 > 0 )
-                      *nfa = nfa_set_accept(*nfa, $2);
-                   }
-                ;
+complete_regexp : regexp { *nfa = $1; }
 
 regexp : alternatives
          { $$ = $1; }
        ;
-
-opt_accept_id : TOK_ACCEPT_ID
-                { $$ = $1; }
-              |
-                { $$ = -1; }
-              ;
 
 alternatives : singletons '|' alternatives
                { $$ = nfa_alternative($1, $3); }

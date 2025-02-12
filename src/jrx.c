@@ -174,20 +174,44 @@ void jrx_regset_init(jrx_regex_t* preg, int nmatch, int cflags) {
 }
 
 int jrx_regset_add(jrx_regex_t* preg, const char* pattern, unsigned int len) {
-    jrx_option options = _options(preg);
+    return jrx_regset_add2(preg, pattern, len, 0, 0);
+}
 
+int jrx_regset_add2(jrx_regex_t* preg, const char* pattern, unsigned int len, int cflags, jrx_accept_id id) {
+    if ( cflags )
+        // No per-pattern flags are supported currently.
+        return REG_NOTSUPPORTED;
+
+    jrx_option options = _options(preg);
     if ( options == REG_NOTSUPPORTED )
         return REG_BADPAT;
 
-    if ( ! preg->nfa )
-        preg->nfa = nfa_compile(pattern, len, options, preg->nmatch, &preg->errmsg);
+    jrx_nfa_context* ctx = 0;
+    if ( preg->nfa )
+        ctx = preg->nfa->ctx;
+    else
+        ctx = nfa_context_create(options, preg->nmatch);
 
+    jrx_nfa* nfa = nfa_compile(ctx, pattern, id, len, &preg->errmsg);
+    if ( ! nfa || preg->errmsg )
+        goto error;
+
+    if ( ! preg->nfa )
+        preg->nfa = nfa;
     else {
-        preg->nfa = nfa_compile_add(preg->nfa, pattern, len, &preg->errmsg);
+        preg->nfa = nfa_alternative(preg->nfa, nfa);
         nfa_remove_epsilons(preg->nfa);
     }
 
-    return preg->errmsg ? REG_BADPAT : REG_OK;
+    return REG_OK;
+
+error:
+    if ( preg->nfa ) {
+        nfa_delete(preg->nfa);
+        preg->nfa = 0;
+    }
+
+    return REG_BADPAT;
 }
 
 int jrx_regset_finalize(jrx_regex_t* preg) {

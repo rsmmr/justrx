@@ -105,6 +105,9 @@ static jrx_nfa* _nfa_deep_copy(jrx_nfa* nfa) {
 }
 
 jrx_nfa_context* nfa_context_create(jrx_option options, int8_t nmatch) {
+    if ( options & JRX_OPTION_NO_CAPTURE )
+        nmatch = 0;
+
     jrx_nfa_context* ctx = (jrx_nfa_context*)malloc(sizeof(jrx_nfa_context));
     ctx->refcnt = 0;
     ctx->options = options;
@@ -152,20 +155,21 @@ void nfa_delete(jrx_nfa* nfa) {
     free(nfa);
 }
 
-jrx_nfa* nfa_set_accept(jrx_nfa* nfa, jrx_accept_id accept) {
+void nfa_set_accept(jrx_nfa* nfa, jrx_accept_id accept) {
     assert(nfa->initial && nfa->final);
 
-    jrx_nfa_accept acc = {0, accept, 0};
+    if ( ! accept )
+        // Use next available ID.
+        accept = ++nfa->ctx->max_accept;
 
     if ( ! nfa->final->accepts )
         nfa->final->accepts = vec_nfa_accept_create(0);
 
-    vec_nfa_accept_append(nfa->final->accepts, acc);
+    jrx_nfa_accept acc = {0, accept, 0};
+    vec_nfa_accept_set(nfa->final->accepts, 0, acc);
 
     if ( accept > nfa->ctx->max_accept )
         nfa->ctx->max_accept = accept;
-
-    return nfa;
 }
 
 jrx_nfa* nfa_set_capture(jrx_nfa* nfa, uint8_t group) {
@@ -419,7 +423,7 @@ void nfa_remove_epsilons(jrx_nfa* nfa) {
     }
 }
 
-static jrx_nfa* _nfa_compile_pattern(jrx_nfa_context* ctx, const char* pattern, int len, const char** errmsg) {
+jrx_nfa* nfa_compile(jrx_nfa_context* ctx, const char* pattern, jrx_accept_id id, int len, const char** errmsg) {
     yyscan_t scanner;
     jrx_nfa* nfa = 0;
 
@@ -451,10 +455,19 @@ static jrx_nfa* _nfa_compile_pattern(jrx_nfa_context* ctx, const char* pattern, 
         return 0;
     }
 
-    // We take the next available accept IDs if we don't have one set yet.
-    if ( ! nfa->final->accepts )
-        nfa = nfa_set_accept(nfa, ++ctx->max_accept);
+    assert(nfa);
+    nfa = nfa_set_capture(nfa, 0);
 
+    /* Add a .* if requested. */
+    if ( nfa->ctx->options & JRX_OPTION_DONT_ANCHOR ) {
+        jrx_nfa* any = nfa_from_ccl(nfa->ctx, ccl_any(nfa->ctx->ccls));
+        nfa = nfa_concat(nfa_iterate(any, 0, -1), nfa, 0);
+    }
+
+    // We take the next available accept ID if we don't have one provided.
+    nfa_set_accept(nfa, id);
+
+    nfa = nfa_set_capture(nfa, 0);
     if ( ctx->options & JRX_OPTION_DEBUG )
         nfa_print(nfa, stderr);
 
@@ -464,32 +477,6 @@ static jrx_nfa* _nfa_compile_pattern(jrx_nfa_context* ctx, const char* pattern, 
         nfa_print(nfa, stderr);
 
     return nfa;
-}
-
-jrx_nfa* nfa_compile_add(jrx_nfa* nfa, const char* pattern, int len, const char** errmsg) {
-#if 0
-    if ( ! (nfa->ctx->options & JRX_OPTION_NO_CAPTURE) ) {
-        *errmsg = "cannot capture subgroups with set matching; use OPTION_NO_CAPTURE";
-        nfa_delete(nfa);
-        return 0;
-    }
-#endif
-
-    jrx_nfa* nnfa = _nfa_compile_pattern(nfa->ctx, pattern, len, errmsg);
-    if ( ! nnfa ) {
-        nfa_delete(nfa);
-        return 0;
-    }
-
-    return nfa_alternative(nfa, nnfa);
-}
-
-jrx_nfa* nfa_compile(const char* pattern, int len, jrx_option options, int8_t nmatch, const char** errmsg) {
-    if ( options & JRX_OPTION_NO_CAPTURE )
-        nmatch = 0;
-
-    jrx_nfa_context* ctx = nfa_context_create(options, nmatch);
-    return _nfa_compile_pattern(ctx, pattern, len, errmsg);
 }
 
 static void _set_tag_print(set_tag* tags, FILE* file) {

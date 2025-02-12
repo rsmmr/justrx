@@ -377,7 +377,9 @@ void dfa_delete(jrx_dfa* dfa) {
 }
 
 jrx_dfa* dfa_compile(const char* pattern, int len, jrx_option options, int8_t nmatch, const char** errmsg) {
-    jrx_nfa* nfa = nfa_compile(pattern, len, options, nmatch, errmsg);
+    jrx_nfa_context* ctx = nfa_context_create(options, nmatch);
+
+    jrx_nfa* nfa = nfa_compile(ctx, pattern, 0, len, errmsg);
     if ( ! nfa )
         return 0;
 
