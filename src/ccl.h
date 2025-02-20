@@ -58,6 +58,7 @@ extern jrx_ccl* ccl_any(jrx_ccl_group* group);
 extern jrx_ccl* ccl_negate(jrx_ccl* ccl);
 extern jrx_ccl* ccl_add_assertions(jrx_ccl* ccl, jrx_assertion assertions);
 extern jrx_ccl* ccl_join(jrx_ccl* ccl1, jrx_ccl* ccl2);
+extern jrx_ccl* ccl_make_case_insensitive(jrx_ccl* ccl);
 
 extern int ccl_is_empty(jrx_ccl* ccl);
 extern int ccl_is_epsilon(jrx_ccl* ccl);

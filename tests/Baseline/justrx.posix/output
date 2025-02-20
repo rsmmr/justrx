@@ -10,7 +10,7 @@ NOTE	all standard compliant implementations should pass these : 2002-05-31
 32: (a*)(a|aa) versus aaaa ERE failed: match was: (0,2)(0,0)(0,2) expected: (0,4)(0,3)(3,4)
 33: a*(a.|aa) versus aaaa ERE failed: match was: (0,2)(0,2) expected: (0,4)(2,4)
 38: (a|b)*c|(a|ab)*c versus abc ERE failed: match was: (0,3)(0,2)(?,?) expected: (0,3)(1,2)
-50: (Ab|cD)* ERE regcomp failed: BADPAT returned: bad pattern: REG_ICASE not supported at this time
+50: (Ab|cD)* versus aBcD ERE failed: match was: (0,4)(0,4) expected: (0,4)(2,4)
 60: [[.NIL.]] ERE regcomp failed: ECOLLATE expected, OK returned
 61: [[=aleph=]] ERE regcomp failed: ECOLLATE expected, OK returned
 

@@ -1,0 +1,11 @@
+# @TEST-DOC: Testing matching multiple expressions in parallel.
+#
+# @TEST-EXEC: printf abc | retest -t std 'abc' 'def{#100}' 'ghi{#200}'; test $? -eq 1
+# @TEST-EXEC: printf def | retest -t std 'abc' 'def{#100}' 'ghi{#200}'; test $? -eq 100
+# @TEST-EXEC: printf ghi | retest -t std 'abc' 'def{#100}' 'ghi{#200}'; test $? -eq 200
+# @TEST-EXEC: printf xxx | retest -t std 'abc' 'def{#100}' 'ghi{#200}'; test $? -eq 0
+#
+# @TEST-EXEC: printf abc | retest -t min 'abc' 'def{#100}' 'ghi{#200}'; test $? -eq 1
+# @TEST-EXEC: printf def | retest -t min std 'abc' 'def{#100}' 'ghi{#200}'; test $? -eq 100
+# @TEST-EXEC: printf ghi | retest -t min std 'abc' 'def{#100}' 'ghi{#200}'; test $? -eq 200
+# @TEST-Exxx: printf xxx | retest -t min 'abc' 'def{#100}' 'ghi{#200}'; test $? -eq 0

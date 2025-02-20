@@ -350,6 +350,40 @@ jrx_ccl* ccl_join(jrx_ccl* ccl1, jrx_ccl* ccl2) {
     return _ccl_group_add_to(ccl1->group, ccl);
 }
 
+jrx_ccl* ccl_make_case_insensitive(jrx_ccl* ccl) {
+    if ( ! ccl->ranges )
+        return ccl;
+
+    jrx_ccl* nccl = _ccl_create_empty();
+
+    set_for_each(char_range, ccl->ranges, r) {
+        set_char_range_insert(nccl->ranges, r);
+
+        int begin = r.begin;
+        int end = r.end;
+
+        if ( begin < 'A' )
+            begin = 'A';
+
+        else if ( begin < 'a' && begin > 'Z' )
+            begin = 'a';
+
+        if ( end > 'z' )
+            end = 'z';
+
+        else if ( end > 'Z' && end < 'a' )
+            end = 'Z';
+
+        jrx_char_range r1 = {tolower(begin), tolower(end)};
+        jrx_char_range r2 = {toupper(begin), toupper(end)};
+
+        set_char_range_insert(nccl->ranges, r1);
+        set_char_range_insert(nccl->ranges, r2);
+    }
+
+    return _ccl_group_add_to(ccl->group, nccl);
+}
+
 int ccl_is_empty(jrx_ccl* ccl) {
     if ( ! ccl )
         return 1;

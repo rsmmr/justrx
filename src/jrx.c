@@ -10,9 +10,6 @@ static jrx_option _options(jrx_regex_t* preg) {
     if ( ! (cflags & REG_EXTENDED) )
         preg->errmsg = "REG_BASIC syntax is not supported";
 
-    if ( cflags & REG_ICASE )
-        preg->errmsg = "REG_ICASE not supported at this time";
-
     if ( cflags & REG_NEWLINE )
         preg->errmsg = "REG_NEWLINE not supported at this time";
 
@@ -37,6 +34,9 @@ static jrx_option _options(jrx_regex_t* preg) {
 
     if ( cflags & REG_LAZY )
         options |= JRX_OPTION_LAZY;
+
+    if ( cflags & REG_ICASE )
+        options |= JRX_OPTION_CASE_INSENSITIVE;
 
     return options;
 }
@@ -174,20 +174,47 @@ void jrx_regset_init(jrx_regex_t* preg, int nmatch, int cflags) {
 }
 
 int jrx_regset_add(jrx_regex_t* preg, const char* pattern, unsigned int len) {
-    jrx_option options = _options(preg);
+    return jrx_regset_add2(preg, pattern, len, 0, 0);
+}
 
+int jrx_regset_add2(jrx_regex_t* preg, const char* pattern, unsigned int len, int cflags, jrx_accept_id id) {
+    if ( cflags & ~REG_ICASE )
+        // No other per-pattern flags are supported here.
+        return REG_NOTSUPPORTED;
+
+    jrx_option options = _options(preg);
     if ( options == REG_NOTSUPPORTED )
         return REG_BADPAT;
 
-    if ( ! preg->nfa )
-        preg->nfa = nfa_compile(pattern, len, options, preg->nmatch, &preg->errmsg);
+    jrx_nfa_context* ctx = 0;
+    if ( preg->nfa )
+        ctx = preg->nfa->ctx;
+    else
+        ctx = nfa_context_create(options, preg->nmatch);
 
+    jrx_nfa* nfa = nfa_compile(ctx, pattern, id, len, &preg->errmsg);
+    if ( ! nfa || preg->errmsg )
+        goto error;
+
+    if ( cflags & REG_ICASE )
+        nfa_make_case_insensitive(nfa);
+
+    if ( ! preg->nfa )
+        preg->nfa = nfa;
     else {
-        preg->nfa = nfa_compile_add(preg->nfa, pattern, len, &preg->errmsg);
+        preg->nfa = nfa_alternative(preg->nfa, nfa);
         nfa_remove_epsilons(preg->nfa);
     }
 
-    return preg->errmsg ? REG_BADPAT : REG_OK;
+    return REG_OK;
+
+error:
+    if ( preg->nfa ) {
+        nfa_delete(preg->nfa);
+        preg->nfa = 0;
+    }
+
+    return REG_BADPAT;
 }
 
 int jrx_regset_finalize(jrx_regex_t* preg) {
@@ -259,6 +286,11 @@ int jrx_reggroups(const jrx_regex_t* preg, jrx_match_state* ms, size_t nmatch, j
 }
 
 int jrx_regexec(const jrx_regex_t* preg, const char* string, size_t nmatch, jrx_regmatch_t pmatch[], int eflags) {
+    return jrx_regexec2(preg, string, nmatch, pmatch, eflags, 0);
+}
+
+int jrx_regexec2(const jrx_regex_t* preg, const char* string, size_t nmatch, jrx_regmatch_t pmatch[], int eflags,
+                 jrx_accept_id* accept_id) {
     if ( eflags & (REG_NOTEOL | REG_NOTBOL) )
         return REG_NOTSUPPORTED;
 
@@ -266,6 +298,9 @@ int jrx_regexec(const jrx_regex_t* preg, const char* string, size_t nmatch, jrx_
         _clear_pmatch(nmatch, pmatch, 1);
         return 0;
     }
+
+    if ( accept_id )
+        *accept_id = 0;
 
     jrx_match_state ms;
     jrx_match_state_init(preg, 0, &ms);
@@ -279,6 +314,9 @@ int jrx_regexec(const jrx_regex_t* preg, const char* string, size_t nmatch, jrx_
         jrx_match_state_done(&ms);
         return REG_NOMATCH;
     }
+
+    if ( accept_id )
+        *accept_id = rc;
 
     rc = jrx_reggroups(preg, &ms, nmatch, pmatch);
     jrx_match_state_done(&ms);

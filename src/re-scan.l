@@ -26,13 +26,9 @@ CCL_EXPR        ("[:"[[:alpha:]]+":]")
 CCL_CHAR_FIRST  ([^\\]|{CCL_EXPR}|{ESCSEQ})
 CCL_CHAR        ([^\\\]]|{CCL_EXPR}|{ESCSEQ})
 
-ACCEPT_ID       \{#[[:digit:]]+\}
-
 %%
 
 <INITIAL>{
-    {ACCEPT_ID}     yylval->count = atoi(yytext+2); return TOK_ACCEPT_ID;
-
 	"{"/[[:digit:]] BEGIN(COUNT); return '{';
 	"["             BEGIN(CCL_FIRST); return '[';
 

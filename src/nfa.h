@@ -53,7 +53,6 @@ typedef struct {
     int refcnt;               // Reference counter for memory management.
 } jrx_nfa_context;
 
-
 /// A transition between two NFA states.
 typedef struct {
     jrx_ccl_id ccl;        // CCL for transition.
@@ -121,7 +120,7 @@ extern jrx_nfa* nfa_create(jrx_nfa_context* ctx, jrx_nfa_state* initial, jrx_nfa
 /// anymore after the call.
 extern void nfa_delete(jrx_nfa* nfa);
 
-extern jrx_nfa* nfa_set_accept(jrx_nfa* nfa, jrx_accept_id accept);
+extern void nfa_set_accept(jrx_nfa* nfa, jrx_accept_id accept);
 extern jrx_nfa* nfa_set_capture(jrx_nfa* nfa, uint8_t group);
 
 extern jrx_nfa* nfa_empty(jrx_nfa_context* ctx);
@@ -131,12 +130,10 @@ extern jrx_nfa* nfa_alternative(jrx_nfa* nfa1, jrx_nfa* nfa2);
 extern jrx_nfa* nfa_iterate(jrx_nfa* nfa, int min, int max);
 
 extern void nfa_remove_epsilons(jrx_nfa* nfa);
+extern void nfa_make_case_insensitive(jrx_nfa* nfa);
 
 // Compile a single pattern.
-extern jrx_nfa* nfa_compile(const char* pattern, int len, jrx_option options, int8_t nmatch, const char** errmsg);
-
-// Add another pattern alternative to an existing NFA.
-extern jrx_nfa* nfa_compile_add(jrx_nfa* nfa, const char* pattern, int len, const char** errmsg);
+extern jrx_nfa* nfa_compile(jrx_nfa_context* ctx, const char* pattern, jrx_accept_id id, int len, const char** errmsg);
 
 extern void nfa_state_print(jrx_nfa_context* ctx, jrx_nfa_state* state, FILE* file);
 extern void nfa_print(jrx_nfa* nfa, FILE* file);
