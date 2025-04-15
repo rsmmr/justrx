@@ -47,6 +47,8 @@ typedef struct jrx_ccl {
 
 extern jrx_ccl* ccl_empty(jrx_ccl_group* group);
 extern void ccl_print(jrx_ccl* ccl, FILE* file);
+extern int ccl_match(jrx_ccl* ccl, jrx_char cp, jrx_char* previous, jrx_assertion assertions);
+extern int ccl_match_assertions(jrx_char cp, jrx_char* previous, jrx_assertion have, jrx_assertion want);
 
 // Do not modify any of the CCLs returned directly; use only the functions
 // provided here for that.

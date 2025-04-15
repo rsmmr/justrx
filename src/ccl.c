@@ -467,3 +467,29 @@ void ccl_print(jrx_ccl* ccl, FILE* file) {
 
     fprintf(file, " (assertions %d)", ccl->assertions);
 }
+
+int ccl_match_assertions(jrx_char cp, jrx_char* previous, jrx_assertion have, jrx_assertion want) {
+    if ( want & JRX_ASSERTION_WORD_BOUNDARY )
+        have |= local_word_boundary(previous, cp) ? JRX_ASSERTION_WORD_BOUNDARY : 0;
+
+    if ( want & JRX_ASSERTION_NOT_WORD_BOUNDARY )
+        have |= local_word_boundary(previous, cp) ? 0 : JRX_ASSERTION_NOT_WORD_BOUNDARY;
+
+    return (want & have) == want;
+}
+
+int ccl_match(jrx_ccl* ccl, jrx_char cp, jrx_char* previous, jrx_assertion assertions) {
+    if ( ! ccl->ranges )
+        return 0;
+
+    if ( ! ccl_match_assertions(cp, previous, assertions, ccl->assertions) )
+        return 0;
+
+    // Look at ranges.
+    set_for_each(char_range, ccl->ranges, r) {
+        if ( cp >= r.begin && cp < r.end )
+            return 1;
+    }
+
+    return 0;
+}

@@ -6,32 +6,6 @@
 #include "jrx-intern.h"
 #include "nfa.h"
 
-static int _ccl_match_assertions(jrx_char cp, jrx_char* previous, jrx_assertion have, jrx_assertion want) {
-    if ( want & JRX_ASSERTION_WORD_BOUNDARY )
-        have |= local_word_boundary(previous, cp) ? JRX_ASSERTION_WORD_BOUNDARY : 0;
-
-    if ( want & JRX_ASSERTION_NOT_WORD_BOUNDARY )
-        have |= local_word_boundary(previous, cp) ? 0 : JRX_ASSERTION_NOT_WORD_BOUNDARY;
-
-    return (want & have) == want;
-}
-
-static int _ccl_match(jrx_ccl* ccl, jrx_char cp, jrx_char* previous, jrx_assertion assertions) {
-    if ( ! ccl->ranges )
-        return 0;
-
-    if ( ! _ccl_match_assertions(cp, previous, assertions, ccl->assertions) )
-        return 0;
-
-    // Look at ranges.
-    set_for_each(char_range, ccl->ranges, r) {
-        if ( cp >= r.begin && cp < r.end )
-            return 1;
-    }
-
-    return 0;
-}
-
 static inline size_t _tag_group_size(jrx_match_state* ms) { return (ms->dfa->max_tag + 1) * sizeof(jrx_offset); }
 
 static inline void* _resize_tags(jrx_match_state* ms, jrx_offset* tags, int* size, jrx_tag_group_id group) {
@@ -93,7 +67,7 @@ static void _update_accepts(jrx_match_state* ms, jrx_dfa_state* state, jrx_char 
         return;
 
     vec_for_each(dfa_accept, state->accepts, acc) {
-        if ( ! _ccl_match_assertions(cp, (ms->offset ? &ms->previous : 0), assertions, acc.final_assertions) )
+        if ( ! ccl_match_assertions(cp, (ms->offset ? &ms->previous : 0), assertions, acc.final_assertions) )
             // No match, final assertions don't work out.
             continue;
 
@@ -237,7 +211,7 @@ int jrx_match_state_advance(jrx_match_state* ms, jrx_char cp, jrx_assertion asse
     vec_for_each(dfa_transition, state->trans, trans) {
         jrx_ccl* ccl = vec_ccl_get(ms->dfa->ccls->ccls, trans.ccl);
 
-        if ( ! _ccl_match(ccl, cp, ms->offset ? &ms->previous : 0, assertions) )
+        if ( ! ccl_match(ccl, cp, ms->offset ? &ms->previous : 0, assertions) )
             // Doesn't match.
             continue;
 
