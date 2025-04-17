@@ -317,8 +317,7 @@ jrx_dfa* dfa_from_nfa(jrx_nfa* nfa) {
         }
     }
 
-    // Make them disjunct.
-    ccl_group_disambiguate(dfa->ccls);
+    ccl_group_finalize(dfa->ccls);
 
     // Create the initial state.
     set_dfa_state_elem* initial = set_dfa_state_elem_create(0);

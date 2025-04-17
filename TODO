@@ -5,11 +5,6 @@
 - No locale support
   * Extend jrx-local.{h,c}.
 
-- CCL optimization
-  * Precompute CCLs for codepoints < 256.
-  * CCLs should use a better data structure to represent sets of
-    intervals.
-
 - DFA optimizations:
     * Remove duplicate states
     * Join transitions to the same target state where CCLs are subset of each other.

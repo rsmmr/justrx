@@ -43,10 +43,26 @@ typedef struct jrx_ccl {
     jrx_ccl_group* group;     // The group this CCL is part of.
     jrx_assertion assertions; // Assertions required for CCL to apply.
     set_char_range* ranges;   // Ranges for this CCL; NULL for epsilon transition.
+
+    // The following fields are computed & cached once the CCL is finalized.
+    int8_t table[32];                  // lookup table storing one bit per character inside the 0-255 range
+    set_char_range* multi_byte_ranges; // ranges including codepoints >= 256
 } jrx_ccl;
 
 extern jrx_ccl* ccl_empty(jrx_ccl_group* group);
 extern void ccl_print(jrx_ccl* ccl, FILE* file);
+extern int ccl_match_assertions(jrx_char cp, jrx_char* previous, jrx_assertion have, jrx_assertion want);
+
+extern int _ccl_match(jrx_ccl* ccl, jrx_char cp, jrx_char* previous,
+                      jrx_assertion assertions); // backend for ccl_match()
+
+static int ccl_match(jrx_ccl* ccl, jrx_char cp, jrx_char* previous, jrx_assertion assertions) {
+    if ( ! assertions && ! ccl->assertions && cp <= 255 )
+        // fast path
+        return ccl->table[cp >> 3] & (1 << (cp & 7));
+
+    return _ccl_match(ccl, cp, previous, assertions);
+}
 
 // Do not modify any of the CCLs returned directly; use only the functions
 // provided here for that.
@@ -68,7 +84,6 @@ extern jrx_ccl_group* ccl_group_create();
 extern void ccl_group_delete(jrx_ccl_group* group);
 extern void ccl_group_print(jrx_ccl_group* group, FILE* file);
 extern jrx_ccl* ccl_group_add(jrx_ccl_group* group, jrx_ccl* ccl);
-
-extern void ccl_group_disambiguate(jrx_ccl_group* group);
+extern void ccl_group_finalize(jrx_ccl_group* group);
 
 #endif

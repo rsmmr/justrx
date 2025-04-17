@@ -15,12 +15,16 @@ static jrx_ccl* _ccl_create_epsilon() {
     ccl->group = 0;
     ccl->assertions = 0;
     ccl->ranges = 0;
+    ccl->multi_byte_ranges = 0;
+    bzero(ccl->table, sizeof(ccl->table));
     return ccl;
 }
 
 static jrx_ccl* _ccl_create_empty() {
     jrx_ccl* ccl = _ccl_create_epsilon();
     ccl->ranges = set_char_range_create(0);
+    ccl->multi_byte_ranges = 0;
+    bzero(ccl->table, sizeof(ccl->table));
     return ccl;
 }
 
@@ -33,6 +37,9 @@ static void _ccl_delete(jrx_ccl* ccl) {
 
     if ( ccl->ranges )
         set_char_range_delete(ccl->ranges);
+
+    if ( ccl->multi_byte_ranges )
+        set_char_range_delete(ccl->multi_byte_ranges);
 
     free(ccl);
 }
@@ -400,7 +407,7 @@ int ccl_is_epsilon(jrx_ccl* ccl) {
 
 jrx_ccl* ccl_group_add(jrx_ccl_group* group, jrx_ccl* ccl) { return _ccl_group_add_to(group, _ccl_copy(ccl)); }
 
-void ccl_group_disambiguate(jrx_ccl_group* group) {
+static void _ccl_group_disambiguate(jrx_ccl_group* group) {
     int changed;
 
     do {
@@ -436,6 +443,15 @@ void ccl_group_disambiguate(jrx_ccl_group* group) {
     } while ( changed );
 }
 
+static void _ccl_finalize(jrx_ccl* ccl);
+
+void ccl_group_finalize(jrx_ccl_group* group) {
+    _ccl_group_disambiguate(group);
+
+    for ( size_t i = 0; i < vec_ccl_size(group->ccls); i++ )
+        _ccl_finalize(vec_ccl_get(group->ccls, i));
+}
+
 int ccl_do_intersect(jrx_ccl* ccl1, jrx_ccl* ccl2) {
     if ( ! ccl1->ranges && ! ccl2->ranges )
         return 1;
@@ -466,4 +482,66 @@ void ccl_print(jrx_ccl* ccl, FILE* file) {
     fputc(']', file);
 
     fprintf(file, " (assertions %d)", ccl->assertions);
+}
+
+static void _ccl_finalize(jrx_ccl* ccl) {
+    if ( ! ccl->ranges )
+        return;
+
+    // For more efficient matching, we compute a lookup table for codepoints <=
+    // 255. In addition, we compute a subset of all ranges involving only
+    // codepoints >= 256.
+
+    set_char_range* nranges = NULL;
+
+    set_for_each(char_range, ccl->ranges, r) {
+        jrx_char i = r.begin;
+        for ( ; i < r.end && i <= 255; i++ )
+            ccl->table[i >> 3] |= (1 << (i & 7));
+
+        if ( i > 255 && i != r.end ) {
+            // Create new range for the rest of the range.
+            //
+            // Note that because we don't actually provide an API for providing
+            // Unicode pattern yet, we should actually never get here. This
+            // also means this code is untested.
+            if ( ! nranges )
+                nranges = set_char_range_create(0);
+
+            jrx_char_range nr = {i, r.end};
+            set_char_range_insert(nranges, nr);
+        }
+    }
+
+    ccl->multi_byte_ranges = nranges; // may be null
+}
+
+int _ccl_match(jrx_ccl* ccl, jrx_char cp, jrx_char* previous, jrx_assertion assertions) {
+    if ( ! ccl_match_assertions(cp, previous, assertions, ccl->assertions) )
+        return 0;
+
+    if ( cp <= 255 )
+        return ccl->table[cp >> 3] & (1 << (cp & 7));
+
+    if ( ccl->multi_byte_ranges ) {
+        // Note that because we don't actually provide an API for matching
+        // Unicode input yet, we should actually never get here. This also
+        // means this code is untested.
+        set_for_each(char_range, ccl->multi_byte_ranges, r) {
+            if ( cp >= r.begin && cp < r.end )
+                return 1;
+        }
+    }
+
+    return 0;
+}
+
+int ccl_match_assertions(jrx_char cp, jrx_char* previous, jrx_assertion have, jrx_assertion want) {
+    if ( want & JRX_ASSERTION_WORD_BOUNDARY )
+        have |= local_word_boundary(previous, cp) ? JRX_ASSERTION_WORD_BOUNDARY : 0;
+
+    if ( want & JRX_ASSERTION_NOT_WORD_BOUNDARY )
+        have |= local_word_boundary(previous, cp) ? 0 : JRX_ASSERTION_NOT_WORD_BOUNDARY;
+
+    return (want & have) == want;
 }
