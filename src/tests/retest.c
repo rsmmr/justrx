@@ -208,7 +208,7 @@ int main(int argc, char** argv) {
     const char* d;
 
     // Parse command line options with getopt().
-    char c;
+    int c;
     while ( (c = getopt(argc, argv, "adlit:")) != -1 ) {
         switch ( c ) {
             case 'a': cflags |= REG_ANCHOR; break;
