@@ -1,4 +1,3 @@
-
 project(JustRX)
 cmake_minimum_required(VERSION 3.13)
 
@@ -13,9 +12,10 @@ set(autogen "${CMAKE_CURRENT_BINARY_DIR}/justrx/autogen")
 
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${autogen})
 
-FLEX_TARGET(scanner src/re-scan.l  ${autogen}/re-scan.c  DEFINES_FILE ${autogen}/re-scan.h)
-BISON_TARGET(parser src/re-parse.y ${autogen}/re-parse.c COMPILE_FLAGS "-Wno-conflicts-rr -Wno-conflicts-sr")
-ADD_FLEX_BISON_DEPENDENCY(scanner parser)
+flex_target(scanner src/re-scan.l ${autogen}/re-scan.c DEFINES_FILE ${autogen}/re-scan.h)
+bison_target(parser src/re-parse.y ${autogen}/re-parse.c
+             COMPILE_FLAGS "-Wno-conflicts-rr -Wno-conflicts-sr")
+add_flex_bison_dependency(scanner parser)
 
 set(SOURCES
     src/ccl.c
@@ -26,10 +26,8 @@ set(SOURCES
     src/jrx.c
     src/nfa.c
     src/util.c
-
     ${BISON_parser_OUTPUTS}
-    ${FLEX_scanner_OUTPUTS}
- )
+    ${FLEX_scanner_OUTPUTS})
 
 add_library(jrx-objects OBJECT ${SOURCES})
 target_compile_options(jrx-objects PRIVATE "-fPIC")
@@ -40,6 +38,6 @@ add_library(jrx $<TARGET_OBJECTS:jrx-objects>)
 
 add_subdirectory(3rdparty)
 
-if ( NOT JUSTRX_DISABLE_TESTS )
+if (NOT JUSTRX_DISABLE_TESTS)
     add_subdirectory(src/tests)
-endif()
+endif ()
