@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.13)
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
-option(DISABLE_TESTS "Skips compiling tests for the library" off)
+option(JUSTRX_DISABLE_TESTS "Skips compiling tests for the library" OFF)
 
 find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
@@ -40,6 +40,6 @@ add_library(jrx $<TARGET_OBJECTS:jrx-objects>)
 
 add_subdirectory(3rdparty)
 
-if ( NOT DISABLE_TESTS )
+if ( NOT JUSTRX_DISABLE_TESTS )
     add_subdirectory(src/tests)
 endif()
