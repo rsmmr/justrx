@@ -925,7 +925,7 @@ static unsigned long note(unsigned long level, char* msg, unsigned long skip, un
     return skip | level;
 }
 
-#define TABS(n) &ts[7 - ((n)&7)]
+#define TABS(n) &ts[7 - ((n) & 7)]
 
 static char ts[] = "\t\t\t\t\t\t\t";
 
