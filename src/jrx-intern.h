@@ -8,6 +8,13 @@
 
 #include <stdint.h>
 
+#if defined(_WIN32)
+#include <string.h>
+#ifndef bzero
+#define bzero(address, size) memset((address), 0, (size))
+#endif
+#endif
+
 #include "jrx.h"
 #include "mem-mgt.h"
 
