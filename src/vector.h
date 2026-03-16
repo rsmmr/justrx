@@ -7,6 +7,7 @@
 #define JRX_VECTOR_H
 
 #include <assert.h>
+#include <string.h>
 
 static const int VECTOR_DEFAULT_SIZE = 2;
 static const double VECTOR_GROWTH_FACTOR = 1.5;
@@ -126,7 +127,7 @@ static const double VECTOR_GROWTH_FACTOR = 1.5;
     if ( (vec)->size )                                                                                                 \
         var = (vec)->elems[0];                                                                                         \
     else                                                                                                               \
-        bzero(&var, sizeof(var));                                                                                      \
+        memset(&var, 0, sizeof(var));                                                                                      \
     for ( __j##var = 0; __j##var < (vec)->size; __j##var++, var = (vec)->elems[__j##var < (vec)->size ? __j##var : 0] )
 
 

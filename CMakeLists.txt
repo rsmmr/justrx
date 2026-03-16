@@ -38,7 +38,7 @@ target_include_directories(jrx-objects BEFORE PUBLIC ${CMAKE_CURRENT_BINARY_DIR}
 
 add_library(jrx $<TARGET_OBJECTS:jrx-objects>)
 
-if (WIN32 AND TARGET libportable)
+if (WIN32)
     target_link_libraries(jrx PRIVATE libportable)
 endif ()
 
