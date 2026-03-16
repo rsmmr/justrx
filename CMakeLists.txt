@@ -30,11 +30,17 @@ set(SOURCES
     ${FLEX_scanner_OUTPUTS})
 
 add_library(jrx-objects OBJECT ${SOURCES})
-target_compile_options(jrx-objects PRIVATE "-fPIC")
+if (NOT MSVC)
+    target_compile_options(jrx-objects PRIVATE "-fPIC")
+endif ()
 target_include_directories(jrx-objects BEFORE PUBLIC include)
 target_include_directories(jrx-objects BEFORE PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
 add_library(jrx $<TARGET_OBJECTS:jrx-objects>)
+
+if (WIN32)
+    target_link_libraries(jrx PRIVATE libportable)
+endif ()
 
 add_subdirectory(3rdparty)
 

@@ -16,7 +16,7 @@ static jrx_ccl* _ccl_create_epsilon() {
     ccl->assertions = 0;
     ccl->ranges = 0;
     ccl->multi_byte_ranges = 0;
-    bzero(ccl->table, sizeof(ccl->table));
+    memset(ccl->table, 0, sizeof(ccl->table));
     return ccl;
 }
 
@@ -24,7 +24,7 @@ static jrx_ccl* _ccl_create_empty() {
     jrx_ccl* ccl = _ccl_create_epsilon();
     ccl->ranges = set_char_range_create(0);
     ccl->multi_byte_ranges = 0;
-    bzero(ccl->table, sizeof(ccl->table));
+    memset(ccl->table, 0, sizeof(ccl->table));
     return ccl;
 }
 
