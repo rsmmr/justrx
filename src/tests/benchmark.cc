@@ -7,7 +7,7 @@ extern "C" {
 #include "regex.h"
 }
 
-const int MAX_CAPTURES = 10;
+#define MAX_CAPTURES 10
 
 
 #if 0
