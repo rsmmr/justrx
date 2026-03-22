@@ -104,6 +104,13 @@ static jrx_nfa* _nfa_deep_copy(jrx_nfa* nfa) {
     return copy;
 }
 
+static void _nfa_free(jrx_nfa* nfa) {
+    if ( nfa->initial_tags )
+        set_tag_delete(nfa->initial_tags);
+
+    free(nfa);
+}
+
 jrx_nfa_context* nfa_context_create(jrx_option options, int8_t nmatch) {
     if ( options & JRX_OPTION_NO_CAPTURE )
         nmatch = 0;
@@ -117,6 +124,7 @@ jrx_nfa_context* nfa_context_create(jrx_option options, int8_t nmatch) {
     ctx->max_accept = 0;  // 0 is "no accept".
     ctx->ccls = ccl_group_create();
     ctx->states = vec_nfa_state_create(0);
+    ctx->nfas = vec_nfa_create(0);
     return ctx;
 }
 
@@ -129,12 +137,20 @@ void nfa_context_delete(jrx_nfa_context* ctx) {
     vec_for_each(nfa_state, ctx->states, state) _nfa_state_delete(state);
 
     vec_nfa_state_delete(ctx->states);
+
+    vec_for_each(nfa, ctx->nfas, nfa) {
+        if ( nfa )
+            _nfa_free(nfa);
+    }
+
+    vec_nfa_delete(ctx->nfas);
     free(ctx);
 }
 
 jrx_nfa* nfa_create(jrx_nfa_context* ctx, jrx_nfa_state* initial, jrx_nfa_state* final) {
     jrx_nfa* nfa = (jrx_nfa*)malloc(sizeof(jrx_nfa));
     nfa->ctx = ctx;
+    nfa->ctx_idx = vec_nfa_append(ctx->nfas, nfa);
     nfa->initial_tags = 0;
     nfa->initial = initial;
     nfa->final = final;
@@ -146,13 +162,14 @@ void nfa_delete(jrx_nfa* nfa) {
     if ( ! nfa )
         return;
 
-    if ( --nfa->ctx->refcnt == 0 )
-        nfa_context_delete(nfa->ctx);
+    jrx_nfa_context* ctx = nfa->ctx;
 
-    if ( nfa->initial_tags )
-        set_tag_delete(nfa->initial_tags);
+    assert(vec_nfa_get(ctx->nfas, nfa->ctx_idx));
+    vec_nfa_set(ctx->nfas, nfa->ctx_idx, 0);
+    _nfa_free(nfa);
 
-    free(nfa);
+    if ( --ctx->refcnt == 0 )
+        nfa_context_delete(ctx);
 }
 
 void nfa_set_accept(jrx_nfa* nfa, jrx_accept_id accept) {
@@ -466,8 +483,6 @@ jrx_nfa* nfa_compile(jrx_nfa_context* ctx, const char* pattern, jrx_accept_id id
         internal_errmsg = "out of memory during parsing";
 
     if ( internal_errmsg ) {
-        nfa_delete(nfa);
-
         if ( errmsg )
             *errmsg = internal_errmsg;
 

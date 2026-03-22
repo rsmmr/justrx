@@ -213,6 +213,11 @@ error:
         nfa_delete(preg->nfa);
         preg->nfa = 0;
     }
+    else {
+        // Context was freshly created and has no surviving NFA to garbage
+        // collect it.
+        nfa_context_delete(ctx);
+    }
 
     return REG_BADPAT;
 }

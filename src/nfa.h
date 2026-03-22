@@ -34,9 +34,13 @@ static inline int _jrx_cmp_tag(jrx_tag t1, jrx_tag t2) {
 DECLARE_SET(tag, jrx_tag, uint32_t, _jrx_cmp_tag)
 
 struct jrx_nfa_state;
+struct jrx_nfa;
 
 /// A ~~vector of ~~jrx_nfa_state pointers.
 DECLARE_VECTOR(nfa_state, struct jrx_nfa_state*, jrx_nfa_state_id)
+
+/// A ~~vector of ~~jrx_nfa pointers.
+DECLARE_VECTOR(nfa, struct jrx_nfa*, uint32_t)
 
 /// Groups a set of related NFAs together. NFA which are manipulated jointly
 /// (e.g., by building a new NFA out of a set of others) must be part of the
@@ -51,6 +55,7 @@ typedef struct {
     jrx_ccl_group* ccls;      // All CCLs.
     vec_nfa_state* states;    // Vector of states indexed by their ID.
     int refcnt;               // Reference counter for memory management.
+    vec_nfa* nfas;            // All NFAs currently owned by the context.
 } jrx_nfa_context;
 
 /// A transition between two NFA states.
@@ -83,6 +88,7 @@ typedef struct jrx_nfa_state {
 /// An NFA. Each NFA is associated with an ~~jrx_nfa_context.
 typedef struct jrx_nfa {
     jrx_nfa_context* ctx;   // The context the NFA is part of.
+    uint32_t ctx_idx;       // Index into the context's NFA vector.
     set_tag* initial_tags;  // The "incoming" tags.
     jrx_nfa_state* initial; // The initial state.
     jrx_nfa_state* final;   // The final state.
